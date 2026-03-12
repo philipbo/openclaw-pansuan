@@ -14,6 +14,13 @@ metadata: { "openclaw": { "emoji": "🎯" } }
 
 来自 deep-analysis 的每场比赛综合评估结果。
 
+**流程衔接说明**：recommendation 与 deep-analysis 交替执行，而非等 deep-analysis 全部完成后才启动。具体流程：
+
+1. deep-analysis 完成第 1 场分析 → recommendation 立即推送第 1 场
+2. deep-analysis 完成第 2 场分析 → recommendation 立即推送第 2 场
+3. ...依此类推...
+4. 全部场次分析推送完成 → recommendation 生成汇总消息（含串关建议）并推送
+
 ## 执行步骤
 
 ### 步骤 1：筛选可推荐场次
