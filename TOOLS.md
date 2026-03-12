@@ -239,5 +239,5 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 
 ### 消息推送
 
-- 使用 messaging 工具向向钱冲发送推荐和复盘报告
-- 如果 messaging 不可用，将内容写入当日 memory 并告知向钱冲
+- 使用 messaging 工具向龙王发送推荐和复盘报告
+- 如果 messaging 不可用，将内容写入当日 memory 并告知龙王
