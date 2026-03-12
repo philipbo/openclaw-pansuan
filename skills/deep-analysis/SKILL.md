@@ -599,16 +599,30 @@ P(客队进j球) = e^(-λ2) × λ2^j / j!
 P(比分k:j) = P(主队进k球) × P(客队进j球)
 ```
 
-**⚠️ 计算精度要求**：涉及 36 个比分组合的浮点运算，**必须使用代码执行**，不要心算或手动推导。
+**⚠️ 计算精度要求**：涉及 64 个比分组合的浮点运算，**必须使用代码执行**，不要心算或手动推导。
 
-**执行方式**：使用 Shell 工具执行 Python 一行命令，不依赖浏览器标签页状态，独立可靠。**执行前务必将下方模板中的 `LAMBDA1` 和 `LAMBDA2` 替换为实际数字**（如 1.35、0.92），否则会报 `NameError`。项目内 `scripts/verify_poisson.py` 可验证该公式与输出（运行 `python3 scripts/verify_poisson.py`）。
+**Dixon-Coles 修正**：基础泊松假设主客队进球独立，但实际上低比分（0:0, 1:0, 0:1, 1:1）的出现频率高于独立预测。用修正因子 ρ ≈ -0.13（欧洲顶级联赛经验值）调整这四个比分的概率，提升比分预测准确度。
+
+**执行方式**：使用 Shell 工具执行 Python 命令，不依赖浏览器标签页状态，独立可靠。**执行前务必将模板中的 `LAMBDA1` 和 `LAMBDA2` 替换为实际数字**（如 1.35、0.92），否则会报 `NameError`。项目内 `scripts/verify_poisson.py` 可验证该公式与输出。
 
 ```bash
 python3 -c "
 import math
 L1, L2 = LAMBDA1, LAMBDA2  # 替换为实际 λ 值，如 1.35, 0.92
+rho = -0.13  # Dixon-Coles 修正因子（低比分相关性）
 def p(l,k): return math.exp(-l)*l**k/math.factorial(k)
-scores=sorted([(f'{i}:{j}',p(L1,i)*p(L2,j)) for i in range(8) for j in range(8)],key=lambda x:-x[1])
+scores = []
+for i in range(8):
+    for j in range(8):
+        prob = p(L1,i) * p(L2,j)
+        if i==0 and j==0: prob *= 1 - L1*L2*rho
+        elif i==1 and j==0: prob *= 1 + L2*rho
+        elif i==0 and j==1: prob *= 1 + L1*rho
+        elif i==1 and j==1: prob *= 1 - rho
+        scores.append((f'{i}:{j}', max(prob, 0)))
+total = sum(pr for _,pr in scores)
+scores = [(s, pr/total) for s,pr in scores]
+scores.sort(key=lambda x: -x[1])
 for s,pr in scores: print(f'{s}: {pr*100:.2f}%')
 "
 ```
