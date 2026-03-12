@@ -599,33 +599,18 @@ P(客队进j球) = e^(-λ2) × λ2^j / j!
 P(比分k:j) = P(主队进k球) × P(客队进j球)
 ```
 
-**⚠️ 计算精度要求**：涉及 36 个比分组合的浮点运算，**必须使用代码执行**（如 Python/JS），不要心算或手动推导。
+**⚠️ 计算精度要求**：涉及 36 个比分组合的浮点运算，**必须使用代码执行**，不要心算或手动推导。
 
-**执行方式**：在步骤 1.5 抓取最后一个赔率页面时，**不要关闭该标签页**，留着用来执行泊松计算的 JS 代码（`browser evaluate`）。计算完成后再关闭。如果已经关闭了所有标签页，`browser open about:blank` 新开一个空白页执行即可。
+**执行方式**：使用 Shell 工具执行 Python 一行命令，不依赖浏览器标签页状态，独立可靠。将下方模板中的 `LAMBDA1` 和 `LAMBDA2` 替换为实际 λ 值后执行：
 
-示例：
-
-```javascript
-// ⚠️ 使用前将 LAMBDA1 和 LAMBDA2 替换为实际计算的 λ 值
-const lambda1 = LAMBDA1; // 替换为主队 λ，如 1.35
-const lambda2 = LAMBDA2; // 替换为客队 λ，如 0.92
-
-function poisson(lambda, k) {
-  return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
-}
-function factorial(n) {
-  return n <= 1 ? 1 : n * factorial(n - 1);
-}
-
-const scores = [];
-for (let i = 0; i <= 5; i++)
-  for (let j = 0; j <= 5; j++)
-    scores.push({
-      score: `${i}:${j}`,
-      prob: poisson(lambda1, i) * poisson(lambda2, j),
-    });
-scores.sort((a, b) => b.prob - a.prob);
-return scores.map((s) => `${s.score}: ${(s.prob * 100).toFixed(2)}%`);
+```bash
+python3 -c "
+import math
+L1, L2 = LAMBDA1, LAMBDA2  # 替换为实际 λ 值，如 1.35, 0.92
+def p(l,k): return math.exp(-l)*l**k/math.factorial(k)
+scores=sorted([(f'{i}:{j}',p(L1,i)*p(L2,j)) for i in range(6) for j in range(6)],key=lambda x:-x[1])
+for s,pr in scores: print(f'{s}: {pr*100:.2f}%')
+"
 ```
 
 **4. 输出比分推荐（3 个，最多 4 个）**
