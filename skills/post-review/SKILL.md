@@ -123,18 +123,20 @@ browser wait --load networkidle --timeout-ms 10000
 2. 逐场获取收盘赔率（比赛开始前最后一次赔率）：
 
 ```
-browser open https://vip.titan007.com/changeDetail/{odds_type}.aspx?id={matchId}&companyID={companyId}&l=0
+browser open {对应URL}
 browser wait --load networkidle --timeout-ms 10000
 browser snapshot
 → 提取赔率变化列表中最后一条赛前记录（即收盘赔率，注意过滤掉滚球数据）
 browser tab close {targetId}
 ```
 
-其中 `{odds_type}` 根据推荐方向选择：
+根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）：
 
-- 胜平负推荐 → `1x2`（**优先用平博(47)**，平博不可用时用 365/威廉）
-- 让球推荐 → `handicap`（**优先用平博(47)**，平博不可用时用澳彩/皇冠）
-- 大小球推荐 → `overunder`（**优先用平博(47)**，平博不可用时用澳彩/皇冠）
+- 让球推荐 → `https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0`
+- 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0`
+- 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0`
+
+优先用**平博(47)**作为收盘基准，平博不可用时退化到 365/威廉（胜平负）或 澳彩/皇冠（让球/大小球）。
 
 **平博(47)是所有玩法 CLV 计算的首选基准**（三种赔率均已抓取），因为其收盘线最接近真实概率。
 

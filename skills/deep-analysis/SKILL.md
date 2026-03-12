@@ -591,7 +591,7 @@ RLM 检测清单：
 
 **3. 计算各比分概率**
 
-用泊松公式计算 0:0 到 5:5 的每个比分概率：
+用泊松公式计算 0:0 到 7:7 的每个比分概率（覆盖至 7 球，确保高 λ 时概率总和 > 97%）：
 
 ```
 P(主队进k球) = e^(-λ1) × λ1^k / k!
@@ -601,14 +601,14 @@ P(比分k:j) = P(主队进k球) × P(客队进j球)
 
 **⚠️ 计算精度要求**：涉及 36 个比分组合的浮点运算，**必须使用代码执行**，不要心算或手动推导。
 
-**执行方式**：使用 Shell 工具执行 Python 一行命令，不依赖浏览器标签页状态，独立可靠。**执行前务必将下方模板中的 `LAMBDA1` 和 `LAMBDA2` 替换为实际数字**（如 1.35、0.92），否则会报 `NameError`。
+**执行方式**：使用 Shell 工具执行 Python 一行命令，不依赖浏览器标签页状态，独立可靠。**执行前务必将下方模板中的 `LAMBDA1` 和 `LAMBDA2` 替换为实际数字**（如 1.35、0.92），否则会报 `NameError`。项目内 `scripts/verify_poisson.py` 可验证该公式与输出（运行 `python3 scripts/verify_poisson.py`）。
 
 ```bash
 python3 -c "
 import math
 L1, L2 = LAMBDA1, LAMBDA2  # 替换为实际 λ 值，如 1.35, 0.92
 def p(l,k): return math.exp(-l)*l**k/math.factorial(k)
-scores=sorted([(f'{i}:{j}',p(L1,i)*p(L2,j)) for i in range(6) for j in range(6)],key=lambda x:-x[1])
+scores=sorted([(f'{i}:{j}',p(L1,i)*p(L2,j)) for i in range(8) for j in range(8)],key=lambda x:-x[1])
 for s,pr in scores: print(f'{s}: {pr*100:.2f}%')
 "
 ```
