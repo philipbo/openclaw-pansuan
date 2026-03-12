@@ -38,6 +38,9 @@ cp IDENTITY.md SOUL.md AGENTS.md USER.md TOOLS.md HEARTBEAT.md MEMORY.md "$PANSU
 # 复制 Skills
 cp -r skills/ "$PANSUAN_WS/skills/"
 
+# 复制工具脚本
+cp -r scripts/ "$PANSUAN_WS/scripts/"
+
 # 创建 memory 目录
 mkdir -p "$PANSUAN_WS/memory/"
 ```
@@ -133,6 +136,8 @@ workspace/
 ├── MEMORY.md            # 长期记忆：累计统计、策略结论
 ├── memory/              # 每日记忆
 │   └── YYYY-MM-DD.md   # 每日分析日志
+├── scripts/             # 工具脚本
+│   └── verify_poisson.py # 泊松比分公式验证
 └── skills/              # 技能
     ├── match-scraper/   # 赛程抓取
     ├── match-screening/ # 初筛
