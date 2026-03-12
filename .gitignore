@@ -25,6 +25,9 @@ go.work.sum
 .sisyphus
 .omc
 
+# 每日分析记忆（运行时生成）
+memory/
+
 # beads
 .beads
 
