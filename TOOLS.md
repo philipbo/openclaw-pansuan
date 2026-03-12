@@ -164,12 +164,19 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 5. browser wait --timeout-ms 3000
 6. browser evaluate --fn '() => {
      const rows = document.querySelectorAll("#scheTab tr[id]");
-     return Array.from(rows).map(tr => ({
-       id: tr.id,
-       cells: Array.from(tr.cells).map(td => td.textContent.trim())
-     }));
+     return Array.from(rows).map(tr => {
+       const cells = Array.from(tr.cells).map(td => td.textContent.trim());
+       const links = Array.from(tr.querySelectorAll("a[href]")).map(a => a.href);
+       let matchId = null;
+       const analysisLink = links.find(l => l.includes("analysis/"));
+       if (analysisLink) {
+         const m = analysisLink.match(/analysis\/(\d+)cn/);
+         if (m) matchId = m[1];
+       }
+       return { id: tr.id, matchId, cells };
+     });
    }'
-   → 得到结构化赛程数据
+   → 得到结构化赛程数据（含 matchId，后续拼接分析页 URL 用）
 ```
 
 如果 evaluate 执行失败或返回空数据，改用 snapshot 获取页面文本再解析。

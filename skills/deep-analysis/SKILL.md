@@ -606,6 +606,10 @@ P(比分k:j) = P(主队进k球) × P(客队进j球)
 示例：
 
 ```javascript
+// ⚠️ 使用前将 LAMBDA1 和 LAMBDA2 替换为实际计算的 λ 值
+const lambda1 = LAMBDA1; // 替换为主队 λ，如 1.35
+const lambda2 = LAMBDA2; // 替换为客队 λ，如 0.92
+
 function poisson(lambda, k) {
   return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
 }
@@ -613,7 +617,6 @@ function factorial(n) {
   return n <= 1 ? 1 : n * factorial(n - 1);
 }
 
-// 计算所有比分概率
 const scores = [];
 for (let i = 0; i <= 5; i++)
   for (let j = 0; j <= 5; j++)
@@ -622,6 +625,7 @@ for (let i = 0; i <= 5; i++)
       prob: poisson(lambda1, i) * poisson(lambda2, j),
     });
 scores.sort((a, b) => b.prob - a.prob);
+return scores.map((s) => `${s.score}: ${(s.prob * 100).toFixed(2)}%`);
 ```
 
 **4. 输出比分推荐（3 个，最多 4 个）**
