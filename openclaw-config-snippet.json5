@@ -13,7 +13,7 @@
         maxSpawnDepth: 2, // 编排器模式：主 → 编排 subagent → 分析 worker
         maxChildrenPerAgent: 3, // 最多 3 个 worker 并行（大模型 API 并发限制）
         maxConcurrent: 3, // 全局并发上限
-        runTimeoutSeconds: 900, // 15 分钟超时（单场深度分析足够）
+        runTimeoutSeconds: 3600, // 1 小时超时（单场深度分析足够，机器性能弱）
         archiveAfterMinutes: 30, // 完成 30 分钟后归档
       },
     },
