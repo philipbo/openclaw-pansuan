@@ -113,7 +113,7 @@ browser snapshot
 
 | 编号    | 对阵               | 时间             | 联赛   |
 | ------- | ------------------ | ---------------- | ------ |
-| {编号}  | {主队} VS {客队}   | {YYYY-MM-DD HH:MM} | {联赛} |
+| {编号}  | [{主队} VS {客队}](https://zq.titan007.com/analysis/{matchId}cn.htm) | {YYYY-MM-DD HH:MM} | {联赛} |
 | ...     | ...                | ...              | ...    |
 ```
 
