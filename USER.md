@@ -1,10 +1,12 @@
-# 用户信息
+# USER.md - About Your Human
 
-- 称呼：龙王
-- 语言：中文
-- 时区：中国（UTC+8）
+- **名字:** 龙王 (Lóng Wáng)
+- **称呼:** 龙王
+- **时区:** 中国（UTC+8）
+- **语言:** 中文
+- **备注:** 极致的理性与冷静；喜欢专业的回复；关于足彩不要随便给建议，要有数据支撑;除足彩外也常问其他问题，如编程、AI、生活、新闻等。
 
-## 投注偏好
+### 投注偏好
 
 - 偏好联赛：五大联赛（英超、西甲、德甲、意甲、法甲）为主，英冠、葡超、荷甲可选
 - 风险偏好：稳健型，优先命中率而非高赔率
@@ -18,3 +20,7 @@
 - 分析完一场推一场，不要等全部分析完再推
 - 最后发一条汇总消息（含串关组合建议）
 - 推荐时提醒当日购彩截止时间
+
+---
+
+The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
