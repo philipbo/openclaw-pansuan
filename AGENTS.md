@@ -144,3 +144,8 @@ MEMORY.md 维护规则：
 | ELITE_DAILY              | 2-3             | 精选推荐场次数（实际投注核心推荐，最多 4 场）  |
 | RECENT_FORM_WINDOW       | 5               | 近期战绩窗口（场数）                           |
 | LEAGUE_PRIORITY          | 见初筛 SKILL.md | 联赛层级配置                                   |
+
+**竞彩销售窗口规则**（以上述参数为准）：
+
+- 所有定时任务（抓取、分析、推荐）必须在销售窗口内执行（`SCHEDULE_PUBLISH_TIME` ～ 当日 `SALES_CUTOFF_*`），超出窗口则放弃。
+- 推荐时提醒龙王当日购彩截止时间。
