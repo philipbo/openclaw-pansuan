@@ -638,7 +638,7 @@ P(比分k:j) = P(主队进k球) × P(客队进j球)
 python3 -c "
 import math
 L1, L2 = LAMBDA1, LAMBDA2  # 替换为实际 λ 值，如 1.35, 0.92
-rho = -0.13  # Dixon-Coles 修正因子（低比分相关性）
+rho = -0.13  # 默认值，按上方 ρ 取值指引调整（高进球联赛 -0.08，低进球联赛 -0.15）
 def p(l,k): return math.exp(-l)*l**k/math.factorial(k)
 scores = []
 for i in range(8):
