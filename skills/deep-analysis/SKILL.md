@@ -1,11 +1,7 @@
 ---
 name: deep-analysis
 description: "对初筛通过的比赛进行 10 步深度分析（基本面→伤停→欧指→亚盘→大小球→合理性→变动→矛盾→风险→比分建模）。在用户说「深度分析」「分析这场比赛」「详细看看」或赛前流程中初筛之后使用。"
-metadata:
-  {
-    "openclaw":
-      { "emoji": "📊", "requires": { "config": ["browser.enabled"] } },
-  }
+metadata: { "openclaw": { "emoji": "📊" } }
 ---
 
 # 深度分析（deep-analysis）
@@ -73,12 +69,12 @@ metadata:
 
 #### 首次分析：抓取分析页
 
-用 browser 打开 titan007 的比赛分析页。URL 由比赛 ID 直接拼接：
+用 agent-browser 打开 titan007 的比赛分析页。URL 由比赛 ID 直接拼接：
 
 ```
-browser open https://zq.titan007.com/analysis/{matchId}cn.htm
-browser wait --load networkidle --timeout-ms 15000
-browser snapshot
+agent-browser tab new https://zq.titan007.com/analysis/{matchId}cn.htm
+agent-browser wait --load networkidle
+agent-browser snapshot
 ```
 
 **⚠️ 方式 2/3 输入时的必提取字段**：当输入来自龙王手动指定 ID/URL（跳过了 match-scraper 和 match-screening），分析页顶部会显示联赛名、主队名、客队名、开球时间。**必须首先提取这四项**，后续推送模板、memory 写入和 recommendation 流程均依赖它们。如果页面未显示开球时间，从「未来五场」或赛程信息推断。
@@ -109,7 +105,7 @@ browser snapshot
 完成后关闭标签页：
 
 ```
-browser tab close {targetId}
+agent-browser tab close
 ```
 
 ### 步骤 1.5：获取赔率变化数据
@@ -158,22 +154,25 @@ browser tab close {targetId}
 
 ```
 # 亚让变化（注意 companyID 大写 D）
-browser open https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0
-browser wait --load networkidle --timeout-ms 10000
-browser snapshot
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0
+agent-browser wait --load networkidle
+agent-browser snapshot
 → 提取：初盘（最后一行）和即时盘（第一行）的盘口 + 水位
+agent-browser tab close
 
 # 进球数变化
-browser open https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0
-browser wait --load networkidle --timeout-ms 10000
-browser snapshot
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0
+agent-browser wait --load networkidle
+agent-browser snapshot
 → 提取：初盘和即时盘的大小球盘口 + 水位
+agent-browser tab close
 
 # 欧指变化
-browser open https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0
-browser wait --load networkidle --timeout-ms 10000
-browser snapshot
+agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0
+agent-browser wait --load networkidle
+agent-browser snapshot
 → 提取：初盘和即时盘的主胜/平/客胜赔率
+agent-browser tab close
 ```
 
 **关键提取要点：**
@@ -196,12 +195,12 @@ browser snapshot
 
 ```
 # 同一公司的 3 个页面并行打开
-browser open https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={cid}&l=0
-browser open https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={cid}&l=0
-browser open https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={cid}&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={cid}&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={cid}&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={cid}&l=0
 # 等待最后一个加载完成
-browser wait --load networkidle --timeout-ms 10000
-# 逐个标签页 snapshot 提取数据后关闭
+agent-browser wait --load networkidle
+# 逐个标签页 snapshot 提取数据后关闭（agent-browser tab {n} 切换，snapshot 后 tab close）
 ```
 
 并行约束：
@@ -848,7 +847,7 @@ for s,pr in scores: print(f'{s}: {pr*100:.2f}%')
 ### 浏览器级异常
 
 - **浏览器崩溃/无响应**：
-  1. 重启浏览器（`browser restart` 或等待 OpenClaw 自动恢复）
+  1. 重启浏览器（`agent-browser close` 然后重新 `agent-browser open`）
   2. 从当日 memory 检查 `## 深度分析` 中已分析完的场次（有完整综合评估的）
   3. 跳过已完成的场次，从下一场继续
   4. 已推送给龙王的分析不受影响

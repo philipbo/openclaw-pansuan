@@ -1,11 +1,7 @@
 ---
 name: match-scraper
 description: "从球探体育(titan007)抓取竞彩足球赛程数据。在用户说「抓取赛程」「获取今日比赛」「今天有什么比赛」或赛前分析流程启动时使用。"
-metadata:
-  {
-    "openclaw":
-      { "emoji": "🕷️", "requires": { "config": ["browser.enabled"] } },
-  }
+metadata: { "openclaw": { "emoji": "🕷️" } }
 ---
 
 # 赛程抓取（match-scraper）
@@ -14,7 +10,7 @@ metadata:
 
 ## 前提条件
 
-- browser 工具已启用且可用
+- `agent-browser` CLI 已安装且可用（通过 Shell 调用）
 - titan007 页面是 JS 动态渲染的，不能用普通 HTTP 请求
 - **每次执行都必须实时抓取最新页面数据**，不得复用之前抓取的旧数据
 
@@ -34,13 +30,13 @@ metadata:
 ### 步骤 1：打开赛程页面
 
 ```
-browser navigate https://jc.titan007.com/index.aspx
+agent-browser open https://jc.titan007.com/index.aspx
 ```
 
 ### 步骤 2：等待页面渲染
 
 ```
-browser wait --load networkidle --timeout-ms 15000
+agent-browser wait --load networkidle
 ```
 
 如果超时，再等 5 秒后重试一次。
@@ -50,27 +46,27 @@ browser wait --load networkidle --timeout-ms 15000
 页面默认隐藏部分场次。需要：
 
 ```
-browser snapshot --interactive
+agent-browser snapshot -i
 ```
 
 在 snapshot 结果中找到「显示全部」按钮（文字可能是"显示全部"或"ShowAllMatch"），点击它：
 
 ```
-browser click {显示全部按钮的ref}
+agent-browser click {显示全部按钮的ref}
 ```
 
 然后等待新数据加载：
 
 ```
-browser wait --timeout-ms 3000
+agent-browser wait 3000
 ```
 
 ### 步骤 4：提取赛程数据
 
-优先使用 evaluate 直接执行 JS 提取表格数据，**重点提取比赛 ID**：
+优先使用 eval 直接执行 JS 提取表格数据，**重点提取比赛 ID**：
 
 ```
-browser evaluate --fn '() => {
+agent-browser eval '(() => {
   const rows = document.querySelectorAll("#scheTab tr[id]");
   if (!rows.length) {
     const allRows = document.querySelectorAll("table tr");
@@ -84,7 +80,6 @@ browser evaluate --fn '() => {
       text: a.textContent.trim(),
       href: a.href
     }));
-    // 提取比赛ID：从「分析」链接中匹配 analysis/{id}cn.htm
     let matchId = null;
     const analysisLink = links.find(l => l.href && l.href.includes("analysis/"));
     if (analysisLink) {
@@ -93,13 +88,13 @@ browser evaluate --fn '() => {
     }
     return { id: tr.id, matchId, cells, links };
   });
-}'
+})()'
 ```
 
-如果 evaluate 返回空数据或报错，退化到 snapshot 模式：
+如果 eval 返回空数据或报错，退化到 snapshot 模式：
 
 ```
-browser snapshot
+agent-browser snapshot
 ```
 
 然后从 snapshot 文本中手动解析赛程信息，并尝试从链接中提取比赛 ID。

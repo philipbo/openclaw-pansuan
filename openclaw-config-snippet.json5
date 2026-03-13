@@ -1,10 +1,9 @@
 // Agent Agent 配置片段
 // 将以下内容合并到 ~/.openclaw/openclaw.json 中
 {
-  // 浏览器配置（确保启用）
+  // 浏览器配置（已迁移到 agent-browser CLI，禁用内置 browser）
   browser: {
-    enabled: true,
-    defaultProfile: "openclaw",
+    enabled: false,
   },
   // Agent 配置
   agents: {

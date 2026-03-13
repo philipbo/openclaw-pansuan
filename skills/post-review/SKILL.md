@@ -1,11 +1,7 @@
 ---
 name: post-review
 description: "赛后复盘：获取比赛结果，对比推荐记录，计算命中率，分析失误原因，更新长期统计。在用户说「复盘」「昨天结果怎么样」「战绩」或每日09:30定时触发时使用。"
-metadata:
-  {
-    "openclaw":
-      { "emoji": "📋", "requires": { "config": ["browser.enabled"] } },
-  }
+metadata: { "openclaw": { "emoji": "📋" } }
 ---
 
 # 赛后复盘（post-review）
@@ -63,11 +59,11 @@ memory_get memory/{复盘日期}.md
 从推荐记录中取出每场比赛的比赛 ID，逐场打开分析页获取最终比分：
 
 ```
-browser open https://zq.titan007.com/analysis/{matchId}cn.htm
-browser wait --load networkidle --timeout-ms 10000
-browser snapshot
+agent-browser tab new https://zq.titan007.com/analysis/{matchId}cn.htm
+agent-browser wait --load networkidle
+agent-browser snapshot
 → 提取页面顶部的最终比分（完场后页面会显示比分）
-browser tab close {targetId}
+agent-browser tab close
 ```
 
 逐场获取，每场间隔 1-2 秒。
@@ -75,10 +71,10 @@ browser tab close {targetId}
 如果推荐记录中比赛 ID 丢失，退化到列表页方案：
 
 ```
-browser navigate https://jc.titan007.com/index.aspx
-browser wait --load networkidle --timeout-ms 10000
+agent-browser open https://jc.titan007.com/index.aspx
+agent-browser wait --load networkidle
 → 如需查看昨日赛程，切换日期选择器
-→ browser snapshot 或 evaluate 提取已完场比赛的比分
+→ agent-browser snapshot 或 eval 提取已完场比赛的比分
 ```
 
 ### 步骤 3：逐场核对
@@ -164,11 +160,11 @@ browser wait --load networkidle --timeout-ms 10000
 2. 逐场获取收盘赔率（比赛开始前最后一次赔率）：
 
 ```
-browser open {对应URL}
-browser wait --load networkidle --timeout-ms 10000
-browser snapshot
+agent-browser tab new {对应URL}
+agent-browser wait --load networkidle
+agent-browser snapshot
 → 提取赔率变化列表中最后一条赛前记录（即收盘赔率，注意过滤掉滚球数据）
-browser tab close {targetId}
+agent-browser tab close
 ```
 
 根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）：

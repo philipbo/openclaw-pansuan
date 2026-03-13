@@ -51,21 +51,26 @@ mkdir -p "$PANSUAN_WS/memory/"
 
 关键配置项：
 
-- `browser.enabled: true` — 启用浏览器
+- `browser.enabled: false` — 禁用内置浏览器（已迁移到 agent-browser CLI）
 - `agents.pansuan.cron` — 定时任务（11:10 赛程同步，17:00 赛前分析，09:30 赛后复盘）
 - `agents.pansuan.workspace` — workspace 路径
 
-### 4. 确保浏览器可用
+### 4. 安装 agent-browser
+
+浏览器自动化使用 [agent-browser](https://github.com/vercel-labs/agent-browser) CLI：
 
 ```bash
-# 安装/检查 OpenClaw 管理的浏览器
-openclaw browser status
-openclaw browser start
+# 安装 agent-browser
+npm install -g agent-browser
 
-# 测试浏览器能否访问 titan007
-openclaw browser navigate https://jc.titan007.com/index.aspx
-openclaw browser wait --load networkidle
-openclaw browser screenshot
+# 下载 Chromium
+agent-browser install
+
+# 测试能否访问 titan007
+agent-browser open https://jc.titan007.com/index.aspx
+agent-browser wait --load networkidle
+agent-browser screenshot
+agent-browser close
 ```
 
 ### 5. 刷新 Skills
@@ -168,8 +173,8 @@ workspace/
 
 ## 注意事项
 
-- titan007 是 JS 动态渲染页面，必须使用 browser 工具，不能用普通 HTTP
-- 浏览器操作每步之间需等待页面渲染（networkidle）
+- titan007 是 JS 动态渲染页面，必须使用 agent-browser CLI，不能用普通 HTTP
+- 浏览器操作每步之间需等待页面渲染（`agent-browser wait --load networkidle`）
 - 每日初筛最多 8 场（建议 3-5 场），精选 2-3 场核心推荐（最多 4 场）
 - MEMORY.md 策略调优和关键教训不允许重复，主题相同时合并更新原条目
 - 所有分析基于数据，不保证胜率，仅供参考
