@@ -230,6 +230,64 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 5. **错误处理**：如果页面加载超时或数据为空，等待 3 秒后重试一次，仍然失败则跳过并记录
 6. **标签页管理**：查看详情页时用新标签页，避免丢失主页状态
 
+## Subagent 工具
+
+### sessions_spawn — 启动后台 subagent
+
+将耗时任务交给后台 subagent 执行，主会话立即返回，保持可用。
+
+**参数**：
+
+| 参数                | 必填 | 说明                                       |
+| ------------------- | ---- | ------------------------------------------ |
+| `task`              | 是   | 任务指令（subagent 收到的 prompt）         |
+| `label`             | 否   | 标签，方便 `/subagents list` 识别          |
+| `model`             | 否   | 指定 subagent 使用的模型（默认继承主会话） |
+| `runTimeoutSeconds` | 否   | 超时秒数（默认 900 = 15 分钟）             |
+
+**返回**：`{ status: "accepted", runId, childSessionKey }` — 非阻塞，立即返回。
+
+**使用示例**：
+
+```
+# 赛程同步（单个 subagent）
+sessions_spawn:
+  task: "执行赛程同步。读取 skills/match-scraper/SKILL.md，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
+  label: "match-sync"
+
+# 深度分析（编排 subagent 内部 spawn worker）
+sessions_spawn:
+  task: "深度分析 [英超] 阿森纳 vs 曼城（ID: 2950977）。读取 skills/deep-analysis/SKILL.md 执行完整 10 步分析。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（JSON 格式）。"
+  label: "deep-analysis-2950977"
+  runTimeoutSeconds: 900
+```
+
+**task 编写要点**：
+
+- 必须包含要读取的 SKILL.md 路径（subagent 不自动知道 skill 位置）
+- 必须说明输出方式（messaging 推送 + announce 返回结构化数据）
+- 包含比赛的关键上下文（联赛、队名、ID），subagent 不继承主会话的上下文
+
+### /subagents — 管理运行中的 subagent
+
+| 命令                      | 用途                                       |
+| ------------------------- | ------------------------------------------ |
+| `/subagents list`         | 查看所有运行中和已完成的 subagent          |
+| `/subagents info {runId}` | 查看某个 subagent 的状态、耗时、session ID |
+| `/subagents log {runId}`  | 查看 subagent 的对话历史                   |
+| `/subagents kill {runId}` | 终止某个 subagent（级联终止其子 subagent） |
+| `/subagents kill all`     | 终止所有 subagent                          |
+
+### Announce 机制
+
+subagent 完成后自动向发起者（主会话或编排 subagent）推送结果：
+
+- depth-2 worker 完成 → announce 到 depth-1 编排 subagent
+- depth-1 编排 subagent 完成 → announce 到主会话
+- announce 包含：状态、结果内容、token 用量、运行时间
+
+编排 subagent 通过 announce 收集所有 worker 的分析结果后，统一执行推荐汇总和 memory 写入。
+
 ## 其他工具
 
 ### Memory 工具
