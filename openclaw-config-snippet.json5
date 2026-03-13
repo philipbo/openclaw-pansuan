@@ -21,7 +21,7 @@
         {
           // 赛前分析 17:00 — 全流程分析（抓取→初筛→深度分析→精选推荐）
           schedule: "0 17 * * *",
-          prompt: "执行赛前分析：1) 用 match-scraper 抓取今日赛程；2) 用 match-screening 初筛；3) 用 deep-analysis 对初筛通过的比赛做完整10步深度分析（含泊松比分建模）；4) 用 recommendation 精选2-3场并生成推荐（含串关建议）推送给龙王。每完成一步都写入今日 memory。",
+          prompt: "先检查 memory/{今天日期}.md 中是否有 '## 跳过分析'，如果有则跳过本次执行并回复 HEARTBEAT_OK。否则执行赛前分析：1) 用 match-scraper 抓取今日赛程；2) 用 match-screening 初筛；3) 用 deep-analysis 对初筛通过的比赛做完整10步深度分析（含泊松比分建模）；4) 用 recommendation 精选2-3场并生成推荐（含串关建议）推送给龙王。每完成一步都写入今日 memory。",
         },
         {
           // 每天 09:30 执行赛后复盘
