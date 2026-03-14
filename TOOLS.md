@@ -218,7 +218,7 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 3. agent-browser wait --load networkidle
 4. agent-browser snapshot
    → 提取：积分排名、近期战绩、盘路走势、伤停、赛前简报等
-5. 如需获取欧赔/亚盘/大小球的即时数据，点击页面顶部「让」「大」「欧」标签
+5. 如需获取欧赔/亚盘/大小球的即时数据，点击页面顶部「亚让」「进球数」「胜平负」标签
 6. 完成后关闭标签页：agent-browser tab close
 ```
 
