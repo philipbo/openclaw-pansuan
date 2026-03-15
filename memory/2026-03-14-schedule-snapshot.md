@@ -2,7 +2,7 @@
 
 **数据来源**：https://jc.titan007.com/index.aspx 日期已选 2026-03-14  
 **抓取方式**：cursor-ide-browser snapshot  
-**说明**：开球时间、matchId 未在可访问性树中暴露，需从页面表格或「析」链接的 href 中再提取（match-scraper 用 eval 取 `#scheTab tr[id]`）。
+**说明**：开球时间、matchId 未在可访问性树中暴露，需用 eval 从页面表格取：选择器为 `#table_live tr[id]`，matchId 从该行内 `onclick="analysis(数字)"` 或 `div[id^="bar_"]` 的 id 提取（**不是**从 href，href 为 `javascript:`）。
 
 ---
 
@@ -64,6 +64,6 @@
 
 ### 建议下一步
 
-1. **补全开球时间与 matchId**：用 agent-browser 的 eval 对 `#scheTab tr[id]` 取 cells + 分析链接，或逐场点「析」从 URL 取 matchId。
+1. **补全开球时间与 matchId**：用 agent-browser 的 eval 对 `#table_live tr[id]` 取 cells，matchId 从该行 `onclick="analysis(数字)"` 或 `div[id^="bar_"]` 提取；或逐场点「析」从跳转后的分析页 URL 取 matchId。
 2. **阶段 2**：有开球时间后做时间窗口（可选）与 <30min/次日05:00+ 剔除。
 3. **阶段 4～6**：对通过 0～3 的场次全部打开分析页做基本面+自开盘+各公司对比，再排序取 Top N。
