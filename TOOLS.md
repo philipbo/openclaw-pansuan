@@ -186,7 +186,7 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 1. agent-browser open https://jc.titan007.com/index.aspx
 2. agent-browser wait --load networkidle
 3. agent-browser eval '(() => {
-     const rows = document.querySelectorAll("#scheTab tr[id]");
+     const rows = document.querySelectorAll("#table_live tr[id]");
      const results = [];
      for (const tr of rows) {
        const cells = Array.from(tr.cells).map(td => td.textContent.trim());

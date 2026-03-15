@@ -53,7 +53,7 @@ agent-browser wait --load networkidle
 
 ```
 agent-browser eval '(() => {
-  const rows = document.querySelectorAll("#scheTab tr[id]");
+  const rows = document.querySelectorAll("#table_live tr[id]");
   if (!rows.length) return [];
   const results = [];
   for (const tr of rows) {
