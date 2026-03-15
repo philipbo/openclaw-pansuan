@@ -286,12 +286,12 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 ```
 # 赛程同步（单个 subagent）
 sessions_spawn:
-  task: "执行赛程同步。读取 skills/match-scraper/SKILL.md，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
+  task: "执行赛程同步。读取 skills/match-scraper/SKILL.md。严格按照模板，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
   label: "match-sync"
 
 # 深度分析（编排 subagent 内部 spawn worker）
 sessions_spawn:
-  task: "深度分析 [英超] 阿森纳 vs 曼城（ID: 2950977）。读取 skills/deep-analysis/SKILL.md 执行完整 10 步分析。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（JSON 格式）。"
+  task: "深度分析 [英超] 阿森纳 vs 曼城（ID: 2950977）。读取 skills/deep-analysis/SKILL.md。严格按照模板，先完成全部 10 步再推送，超 4000 字须分段，执行完整 10 步分析。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（JSON 格式）。"
   label: "deep-analysis-2950977"
   runTimeoutSeconds: 900
 ```

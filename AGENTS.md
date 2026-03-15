@@ -209,7 +209,7 @@ MEMORY.md 维护规则：
 4. 对每场初筛通过的比赛，`sessions_spawn` 一个 worker sub-subagent：
    ```
    sessions_spawn:
-     task: "深度分析 [{联赛}] {主队} vs {客队}（ID: {matchId}）。读取 skills/deep-analysis/SKILL.md 执行完整 10 步分析。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果。"
+     task: "深度分析 [{联赛}] {主队} vs {客队}（ID: {matchId}）。读取 skills/deep-analysis/SKILL.md。严格按照模板，执行完整 10 步分析；先完成全部 10 步再推送，超 4000 字须分段。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果。"
      label: "deep-analysis-{matchId}"
    ```
 5. 等待所有 worker 的 announce 回来，收集分析结果
@@ -222,7 +222,7 @@ MEMORY.md 维护规则：
 
 1. 读取 `skills/deep-analysis/SKILL.md`
 2. 对单场比赛执行完整 10 步深度分析
-3. 通过 messaging 推送该场完整分析报告给龙王
+3. 通过 messaging 推送该场完整分析报告给龙王（**先完成全部 10 步再推送**；总长超 4000 字须在「分析过程」与「结论」间分段发送，详见 SKILL）
 4. announce 结构化评估结果（综合评估 + 泊松概率表 + memory 摘要内容）回编排 subagent
 
 **并行约束**：
@@ -264,7 +264,7 @@ MEMORY.md 维护规则：
 2. `sessions_spawn` 单个 subagent：
    ```
    sessions_spawn:
-     task: "执行赛程同步。读取 skills/match-scraper/SKILL.md，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
+     task: "执行赛程同步。读取 skills/match-scraper/SKILL.md。严格按照模板，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
      label: "match-sync"
    ```
 3. 保持空闲
@@ -277,7 +277,7 @@ MEMORY.md 维护规则：
 2. `sessions_spawn` 单个 subagent：
    ```
    sessions_spawn:
-     task: "执行赛后复盘。读取 skills/post-review/SKILL.md，获取昨日赛果，对比推荐记录，计算命中率，分析失误，更新 MEMORY.md，通过 messaging 推送复盘报告给龙王。"
+     task: "执行赛后复盘。读取 skills/post-review/SKILL.md。严格按照模板，获取昨日赛果，对比推荐记录，计算命中率，分析失误，更新 MEMORY.md，通过 messaging 推送复盘报告给龙王。"
      label: "post-review"
    ```
 3. 保持空闲
