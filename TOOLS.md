@@ -225,8 +225,8 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 
 **提取比赛 ID 的方法**：
 
-- 从赛程列表页的「分析」链接中提取，链接格式为 `analysis/{matchId}cn.htm`
-- 或从列表行的 tr id 属性提取（取决于页面实现）
+- 赛程列表页的「析」链接的 `href` 为 `javascript:`，**不含** matchId。必须从该行内 **`onclick="analysis(数字)"`** 提取数字，或从 **`div[id^="bar_"]`** 的 `id`（如 `bar_2958853`）提取数字，即 matchId。
+- 分析页 URL 格式为 `https://zq.titan007.com/analysis/{matchId}cn.htm`，用上述 matchId 拼接即可。
 
 ### 抓取已完场比分（复盘用）
 
