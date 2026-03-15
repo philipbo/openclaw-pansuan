@@ -41,7 +41,7 @@ URL: `https://jc.titan007.com/index.aspx`
 
 页面特点：
 
-- 默认隐藏部分场次，需点击「显示全部」
+- 竞彩页面默认已显示全部赛事，无需点击「显示全部」
 - 支持日期切换（可查看前几天的赛程）
 - 支持按状态筛选（未开场/已完场/进行中）
 - 数据通过 JavaScript 动态加载
@@ -185,11 +185,7 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 ```
 1. agent-browser open https://jc.titan007.com/index.aspx
 2. agent-browser wait --load networkidle
-3. agent-browser snapshot -i
-   → 找到「显示全部」按钮的 ref
-4. agent-browser click {ref}
-5. agent-browser wait 2000
-6. agent-browser eval '(() => {
+3. agent-browser eval '(() => {
      const rows = document.querySelectorAll("#scheTab tr[id]");
      return Array.from(rows).map(tr => {
        const cells = Array.from(tr.cells).map(td => td.textContent.trim());

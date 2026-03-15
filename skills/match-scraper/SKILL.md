@@ -41,27 +41,9 @@ agent-browser wait --load networkidle
 
 如果超时，再等 5 秒后重试一次。
 
-### 步骤 3：展开全部赛事
+### 步骤 3：提取赛程数据
 
-页面默认隐藏部分场次。需要：
-
-```
-agent-browser snapshot -i
-```
-
-在 snapshot 结果中找到「显示全部」按钮（文字可能是"显示全部"或"ShowAllMatch"），点击它：
-
-```
-agent-browser click {显示全部按钮的ref}
-```
-
-然后等待新数据加载：
-
-```
-agent-browser wait 3000
-```
-
-### 步骤 4：提取赛程数据
+竞彩页面（`jc.titan007.com`）默认已显示全部赛事，无需点击「显示全部」。直接提取。
 
 优先使用 eval 直接执行 JS 提取表格数据，**重点提取比赛 ID**：
 
