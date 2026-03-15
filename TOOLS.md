@@ -163,13 +163,19 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 
 #### 页面数据格式
 
-赔率变化页面以表格形式展示，每行包含：
+三种赔率变化页 URL（亚盘 companyID 大写，欧指/大小球 companyid 小写）：
 
-- **时间**：赔率变化的时间点
-- **比分**（如已开赛）
-- **赔率数据**：亚让为「主队水位 + 盘口 + 客队水位」；进球数为「大球水位 + 盘口 + 小球水位」；欧指为「主胜 + 平局 + 客胜」
-- **变化时间**
-- **状态**：即/封/临等
+- 胜平负：`https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={id}&l=0`
+- 亚盘：`https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={id}&l=0`
+- 大小球：`https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={id}&l=0`
+
+表格为多列，**数据行按列顺序**（与表头主客队名等对应）为：
+
+- **欧指页**：主胜 | 平 | 客胜 | **变化时间** | 状态。排序与时点用「变化时间」，格式 `MM-DD HH:mm`。
+- **亚盘页**：主水 | 盘口 | 客水 | **变化时间** | 状态。盘口如平手、平手/半球。
+- **大小球页**：大球水 | 盘口 | 小球水 | **变化时间** | 状态。盘口如 2.5、2/2.5。
+
+行序：**第一行** = 赛前最新（即时盘），**最后一行** = 最早（初盘）；中间为每次变动。状态列：即/早/封/临等；(初盘) 表示初盘行。
 
 重点关注：
 
@@ -271,7 +277,7 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 | `task`              | 是   | 任务指令（subagent 收到的 prompt）         |
 | `label`             | 否   | 标签，方便 `/subagents list` 识别          |
 | `model`             | 否   | 指定 subagent 使用的模型（默认继承主会话） |
-| `runTimeoutSeconds` | 否   | 超时秒数（默认 900 = 30 分钟）             |
+| `runTimeoutSeconds` | 否   | 超时秒数（默认 3600 = 60 分钟）            |
 
 **返回**：`{ status: "accepted", runId, childSessionKey }` — 非阻塞，立即返回。
 
