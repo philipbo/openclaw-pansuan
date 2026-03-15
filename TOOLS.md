@@ -187,19 +187,24 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 2. agent-browser wait --load networkidle
 3. agent-browser eval '(() => {
      const rows = document.querySelectorAll("#scheTab tr[id]");
-     return Array.from(rows).map(tr => {
+     const results = [];
+     for (const tr of rows) {
        const cells = Array.from(tr.cells).map(td => td.textContent.trim());
-       const links = Array.from(tr.querySelectorAll("a[href]")).map(a => a.href);
        let matchId = null;
-       const analysisLink = links.find(l => l.includes("analysis/"));
-       if (analysisLink) {
-         const m = analysisLink.match(/analysis\/(\d+)cn/);
+       const btn = tr.querySelector("a[onclick*=\"analysis(\"]");
+       if (btn) {
+         const m = btn.getAttribute("onclick").match(/analysis\((\d+)\)/);
          if (m) matchId = m[1];
        }
-       return { id: tr.id, matchId, cells };
-     });
+       if (!matchId) {
+         const bar = tr.querySelector("div[id^=\"bar_\"]");
+         if (bar) { const m = bar.id.match(/bar_(\d+)/); if (m) matchId = m[1]; }
+       }
+       if (matchId) results.push({ id: tr.id, matchId, cells });
+     }
+     return results;
    })()'
-   → 得到结构化赛程数据（含 matchId，后续拼接分析页 URL 用）
+   → 得到结构化赛程数据（matchId 从 onclick="analysis(ID)" 提取，每场一条）
 ```
 
 如果 eval 执行失败或返回空数据，改用 snapshot 获取页面文本再解析。

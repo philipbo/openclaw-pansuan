@@ -47,31 +47,43 @@ agent-browser wait --load networkidle
 
 优先使用 eval 直接执行 JS 提取表格数据，**重点提取比赛 ID**：
 
+**⚠️ matchId 在 onclick 里，不在 href 里**。页面的「析」链接格式为 `<a href="javascript:" onclick="analysis(2958853);">析</a>`，必须从 `onclick` 属性提取 matchId，而非 `href`。
+
+**⚠️ rowspan=2**：每场比赛占两行 `<tr>`，matchId 所在的「数据」`<td>` 有 `rowspan="2"`，仅挂在第一行。脚本只提取含 `analysis()` onclick 的行，自动跳过第二行，避免重复。
+
 ```
 agent-browser eval '(() => {
   const rows = document.querySelectorAll("#scheTab tr[id]");
-  if (!rows.length) {
-    const allRows = document.querySelectorAll("table tr");
-    return Array.from(allRows).slice(1).map(tr => ({
-      cells: Array.from(tr.cells).map(td => td.textContent.trim())
-    }));
-  }
-  return Array.from(rows).map(tr => {
+  if (!rows.length) return [];
+  const results = [];
+  for (const tr of rows) {
     const cells = Array.from(tr.cells).map(td => td.textContent.trim());
-    const links = Array.from(tr.querySelectorAll("a[href]")).map(a => ({
-      text: a.textContent.trim(),
-      href: a.href
-    }));
     let matchId = null;
-    const analysisLink = links.find(l => l.href && l.href.includes("analysis/"));
-    if (analysisLink) {
-      const m = analysisLink.href.match(/analysis\/(\d+)cn/);
+    const analysisBtn = tr.querySelector("a[onclick*=\"analysis(\"]");
+    if (analysisBtn) {
+      const m = analysisBtn.getAttribute("onclick").match(/analysis\((\d+)\)/);
       if (m) matchId = m[1];
     }
-    return { id: tr.id, matchId, cells, links };
-  });
+    if (!matchId) {
+      const barDiv = tr.querySelector("div[id^=\"bar_\"]");
+      if (barDiv) {
+        const m = barDiv.id.match(/bar_(\d+)/);
+        if (m) matchId = m[1];
+      }
+    }
+    if (matchId) {
+      results.push({ id: tr.id, matchId, cells });
+    }
+  }
+  return results;
 })()'
 ```
+
+**提取逻辑**（按优先级）：
+
+1. 找 `a[onclick*="analysis("]`，从 `onclick="analysis(2958853)"` 提取数字 → matchId
+2. 若无，找 `div[id^="bar_"]`，从 `id="bar_2958853"` 提取数字 → matchId
+3. 两者都找不到的行跳过（通常是 rowspan 的第二行，无 matchId 数据单元格）
 
 如果 eval 返回空数据或报错，退化到 snapshot 模式：
 
@@ -79,7 +91,7 @@ agent-browser eval '(() => {
 agent-browser snapshot
 ```
 
-然后从 snapshot 文本中手动解析赛程信息，并尝试从链接中提取比赛 ID。
+从 snapshot 文本中查找 `analysis(数字)` 模式提取比赛 ID，配合行文本解析队名和时间。
 
 ### 步骤 5：结构化输出
 
