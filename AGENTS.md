@@ -247,12 +247,14 @@ MEMORY.md 维护规则：
 **共同步骤**（上述校验通过后或输入为 ID/URL 时）：
 
 1. 推送「⚡ 正在分析 N 场比赛…」
-2. 对每场比赛 `sessions_spawn` 一个 depth-1 worker subagent（并行）
+2. **对每场比赛必须 `sessions_spawn` 一个 depth-1 worker subagent**（并行），**不得在主会话中执行深度分析**
 3. 保持空闲，收齐所有 announce 后汇总推荐
+
+**⚠️ 强制规则**：只要有待分析的场次（≥1 场），深度分析**一律在 subagent 中执行**。主会话**禁止**读取 skills/deep-analysis/SKILL.md 并在主会话跑 10 步分析或浏览器抓取——否则会阻塞主会话数分钟，且与「所有耗时流程在 subagent」的设计冲突。主会话只做：解析编号/ID、spawn worker、收齐 announce、汇总。
 
 **worker subagent（depth 1）**：同赛前全流程中的 worker，但作为 depth-1 直接由主会话 spawn。
 
-**单场也 spawn**：即使只有 1 场，深度分析也需要 5-10 分钟浏览器操作（分析页 + 15-18 个赔率页面），足以阻塞主会话。
+**单场也 spawn**：即使只有 1 场（如「分析 001」），也必须 spawn 一个 worker；深度分析需要 5-10 分钟浏览器操作（分析页 + 15-18 个赔率页面），足以阻塞主会话。
 
 #### 场景 3：赛程同步（cron 11:10 / 手动）
 
