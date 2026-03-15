@@ -103,110 +103,301 @@ agent-browser snapshot
 agent-browser tab close
 ```
 
-### 步骤 1.5：获取赔率变化数据
+### 步骤 1.5：获取赔率变化数据（并行模式）
 
 分析页获取的是汇总盘路，深度盘赔分析还需要抓取各公司的**赔率变化历史**。
 
-用比赛 ID + 公司 ID 拼接 URL，逐个公司获取。
+**⚠️ 并行抓取原则**：所有赔率页面**先同时打开**（浏览器内部并行加载）→ **统一等待**渲染 → **按已知顺序逐个 snapshot** → **统一关闭**。整个打开阶段只需几秒（浏览器并行），snapshot 阶段逐个但快速（switch → snapshot → 下一个），总耗时远低于逐页串行。
 
-**博彩公司 ID：**
+#### 1. 确定要抓取的公司列表
 
-| 公司        | ID  | 亚让                | 进球数(大小球)      | 欧指(胜平负)               |
-| ----------- | --- | ------------------- | ------------------- | -------------------------- |
-| 澳彩        | 1   | **必抓（4家之一）** | **必抓（4家之一）** | 可选                       |
-| 皇冠        | 3   | **必抓（4家之一）** | **必抓（4家之一）** | 可选                       |
-| 365         | 8   | **必抓（4家之一）** | **必抓（4家之一）** | **必抓（欧洲与威廉交叉）** |
-| 威廉希尔    | 9   | 备选                | 备选                | **必抓（欧洲比赛）**       |
-| 易胜博      | 12  | **必抓（4家之一）** | **必抓（4家之一）** | 可选                       |
-| Interwetten | 19  | 备选                | 备选                | **必抓（德国联赛）**       |
-| 平博        | 47  | **必抓（参照）**    | **必抓（参照）**    | **必抓（真实概率锚点）**   |
-| 香港马会    | 48  | 亚洲联赛可选        | 亚洲联赛可选        | 亚洲联赛可选               |
+根据联赛类型查表，确定本场三类赔率各需抓取哪些公司：
 
-**抓取优先级（按联赛区域区分）：**
+| 联赛类型 | 亚盘必抓            | 大小球必抓          | 欧指必抓  |
+| -------- | ------------------- | ------------------- | --------- |
+| 欧洲赛事 | 1, 3, 8, 12, 47     | 1, 3, 8, 12, 47     | 9, 8, 47  |
+| 德国联赛 | 1, 3, 8, 12, 47     | 1, 3, 8, 12, 47     | 9, 19, 47 |
+| 亚洲联赛 | 1, 3, 8, 12, 47, 48 | 1, 3, 8, 12, 47, 48 | 47, 48    |
+| 其他     | 1, 3, 8, 12, 47     | 1, 3, 8, 12, 47     | 47        |
 
-亚让：
+公司 ID 对照：澳彩=1, 皇冠=3, 365=8, 威廉=9, 易胜博=12, Interwetten=19, 平博=47, 香港马会=48
 
-- **必抓 4 家**：澳彩(1)、皇冠(3)、365(8)、易胜博(12)。先对 4 家分别分析并**交叉认证**，达成共识后再以**平博(47)**为参照（尖锐资金方向）。
-- **一致性规则**：4 家中若有 **1 家与其余 3 家共识不一致** → **严格警惕冷门**（该公司可能掌握额外信息）。
-- 亚洲联赛：可选加入香港马会(48)
+**分析规则**（与之前一致）：
 
-进球数(大小球)：
+- **亚盘 / 大小球**：澳彩(1)、皇冠(3)、365(8)、易胜博(12) 四家**交叉认证**；达成共识后以平博(47)为参照。4 家中若有 **1 家与其余不一致** → **严格警惕冷门**。亚洲联赛可选加入马会(48)。
+- **欧指**：所有比赛必抓平博(47)。欧洲赛事：威廉(9) + 365(8) 交叉认证。德国联赛：威廉(9) + Interwetten(19) 交叉认证。
 
-- **必抓 4 家**：澳彩(1)、皇冠(3)、365(8)、易胜博(12)。先对 4 家分别分析并**交叉认证**，达成共识后再以**平博(47)**为参照（尖锐资金对进球数的判断）。
-- **一致性规则**：4 家中若有 **1 家与其余 3 家共识不一致** → **严格警惕冷门**（该公司可能掌握额外信息）。
-- 亚洲联赛：可选加入香港马会(48)
+按联赛类型得到三列 ID 后，**为每个 (公司, 类型) 拼一个 URL**，得到完整 URL 列表。
 
-欧指(胜平负)：
+**URL 模板**（注意亚盘用 companyID 大写 D，其余用 companyid 小写 d）：
 
-- **所有比赛必抓平博(47)**：真实概率锚点，CLV 基准，比分概率验证。
-- **欧洲赛事（含非德国）**：必抓**威廉(9)、365(8)**，**威廉与 365 交叉认证**。
-- **德国联赛（德甲/德乙）**：必抓**威廉(9)、Interwetten(19)**，**威廉与 Interwetten 交叉认证**。
-- 澳彩/皇冠/易胜博 欧指为可选（与亚让/大小球同场对比、防诱盘时可参考）。
-- 亚洲联赛：可选加入香港马会(48)
+- 亚盘：`https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={cid}&l=0`
+- 大小球：`https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={cid}&l=0`
+- 欧指：`https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={cid}&l=0`
 
-**操作流程（每家公司）：**
+**预估 URL 数量**：欧洲赛事 = 亚盘 5 + 大小球 5 + 欧指 3 = **13 个 URL**；德国联赛同 13 个；亚洲联赛最多 14 个。
+
+#### 2. 分批并行打开赔率页面
+
+**分批规则**：
+
+- 将步骤 1 得到的全部 URL 列表，按顺序切分为每批 **≤ 9 个 URL**
+- 每批内：连续发所有 `tab new`（中间不等待），浏览器并行加载
+- 每批走完整流程：打开 → 等待 → tabs list 校验 → snapshot → 关闭
+- 批与批之间间隔 1-2 秒
+- URL 总数不影响并发上限，只影响批次数（13 URL = 2 批，20 URL = 3 批）
+
+以**欧洲赛事、matchId=2784764** 为例，共 13 个 URL，分 2 批：
 
 ```
-# 亚让变化（注意 companyID 大写 D）
-agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0
-agent-browser wait --load networkidle
-agent-browser snapshot
-→ 提取：见下方「提取规则（按公司类型）」
-agent-browser tab close
+# ━━━ 第 1 批：澳彩(1) + 皇冠(3) + 365(8)，各 3 页，共 9 tab ━━━
 
-# 进球数变化
-agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0
-agent-browser wait --load networkidle
-agent-browser snapshot
-→ 提取：见下方「提取规则（按公司类型）」
-agent-browser tab close
+# tab 2 — 澳彩 亚盘
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id=2784764&companyID=1&l=0
+# tab 3 — 澳彩 大小球
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id=2784764&companyid=1&l=0
+# tab 4 — 澳彩 欧指（欧洲赛事 365 有欧指，澳彩无必抓欧指 → 此处换 365 欧指）
+agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id=2784764&companyid=8&l=0
+# tab 5 — 皇冠 亚盘
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id=2784764&companyID=3&l=0
+# tab 6 — 皇冠 大小球
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id=2784764&companyid=3&l=0
+# tab 7 — 威廉 欧指
+agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id=2784764&companyid=9&l=0
+# tab 8 — 365 亚盘
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id=2784764&companyID=8&l=0
+# tab 9 — 365 大小球
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id=2784764&companyid=8&l=0
+# tab 10 — 平博 欧指
+agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id=2784764&companyid=47&l=0
 
-# 欧指变化
-agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0
-agent-browser wait --load networkidle
-agent-browser snapshot
-→ 提取：见下方「提取规则（按公司类型）」
-agent-browser tab close
+# → 以上 9 个 tab 浏览器并行加载中
 ```
 
-**提取规则（按公司类型）**
+#### 3. 统一等待渲染 + URL 校验建立映射
+
+```
+agent-browser wait --load networkidle
+agent-browser wait 3000
+```
+
+等待最后打开的 tab 达到 networkidle，再额外等 3 秒确保所有 tab 的动态表格渲染完成。
+
+**然后立即用 `browser_tabs list` 建立经过 URL 校验的 tab 映射**——这是防止数据串号的关键步骤：
+
+```
+agent-browser tabs list
+```
+
+返回示例：
+
+```
+tab 1: https://zq.titan007.com/analysis/2784764cn.htm    ← 分析页，跳过
+tab 2: ...handicap.aspx?id=2784764&companyID=1&l=0       ← 亚盘, cid=1
+tab 3: ...overunder.aspx?id=2784764&companyid=1&l=0      ← 大小球, cid=1
+tab 5: ...1x2.aspx?id=2784764&companyid=8&l=0            ← 欧指, cid=8  (注意：tab 4 可能打开失败被跳过)
+...
+```
+
+**从每个 tab 的 URL 解析三个字段**：
+
+| URL 部分                                       | 解析方式   | 含义                         |
+| ---------------------------------------------- | ---------- | ---------------------------- |
+| 路径中 `handicap` / `overunder` / `1x2`        | 路径段匹配 | 赔率类型（亚盘/大小球/欧指） |
+| `id=` 或 `companyID=` 或 `companyid=` 后的数字 | 参数匹配   | matchId 和 companyId         |
+
+**校验规则**：
+
+1. **matchId 校验**：所有赔率 tab 的 `id=` 必须等于当前分析的 matchId。如有不一致 → **该 tab 数据作废，不提取**。
+2. **去重校验**：同一 (companyId, type) 不应出现两个 tab。如有重复 → 只取第一个。
+3. **缺失检测**：对比预期的 URL 列表，如有公司/类型缺失（tab 打开失败） → 记录缺失项，后续跳过该公司对应分析。
+
+校验通过后，得到**经过验证的 tab 映射表**：
+
+```
+verified_tabs = [
+  { tab: 2,  matchId: 2784764, company: "澳彩",  cid: 1,  type: "亚盘" },
+  { tab: 3,  matchId: 2784764, company: "澳彩",  cid: 1,  type: "大小球" },
+  { tab: 5,  matchId: 2784764, company: "365",   cid: 8,  type: "欧指" },
+  ...
+]
+```
+
+#### 4. 按校验后的映射逐个 snapshot
+
+**严格按 `verified_tabs` 遍历**，不依赖打开顺序：
+
+```
+# 遍历 verified_tabs 中的每一项
+agent-browser tab switch {tab_id}
+agent-browser snapshot
+→ 提取数据，归类到 data[cid][type]
+```
+
+每个 snapshot 的提取结果存入 `data[companyId][type]`，由 URL 校验确定的 (companyId, type) 做 key——**即使 tab 编号跳号、乱序，数据归属也不会错**。
+
+#### 5. 关闭本批赔率标签页
+
+```
+# 保留 tab 1（分析页），关闭其余所有赔率 tab
+agent-browser tabs close --except 1
+```
+
+若工具不支持 `--except`，可在步骤 4 的循环中「snapshot 完一个就 close 该 tab」。
+
+#### 6. 开下一批（若有剩余公司）
+
+间隔 **1-2 秒** 后，开第 2 批（本例还有易胜博(12) 和平博(47) 各 2 页，共 4 个 tab）：
+
+```
+# ━━━ 第 2 批：易胜博(12) + 平博(47)，共 4 tab ━━━
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id=2784764&companyID=12&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id=2784764&companyid=12&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id=2784764&companyID=47&l=0
+agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id=2784764&companyid=47&l=0
+
+agent-browser wait --load networkidle
+agent-browser wait 3000
+
+# 同步骤 3：tabs list → URL 校验 → 建立 verified_tabs
+agent-browser tabs list
+# 同步骤 4：按 verified_tabs 遍历 snapshot，归类到 data[cid][type]
+# 同步骤 5：关闭本批赔率 tab
+agent-browser tabs close --except 1
+```
+
+每批都重复步骤 3-5 的完整流程（tabs list → URL 校验 → snapshot → 关闭），确保数据归属正确。
+
+#### 7. 数据整理
+
+从所有 snapshot 结果中按 (公司, 类型) 整理：
+
+- **初盘**：每家公司赔率变化表的**最后一行**（最早开出）
+- **即时盘**：每家公司赔率变化表的**赛前最新一行**
+- **变化方向**：初盘 → 即时的盘口/水位变化
+
+**⚠️ 滚球数据过滤**：赔率行的时间 > 开球时间，或比分列出现非 0:0（如 1:0），均为滚球数据，**必须忽略**。只保留比赛开始前的赔率变化记录。
+
+**提取规则（按公司类型）**：
 
 - **平博(47)**：只提取**两个时点**——初盘（表格最后一行）、即时盘（赛前最新一行）。不参与「变动轨迹」分析，仅作真实概率/尖锐资金参照与 CLV 分母。
-- **其他公司（澳彩/皇冠/365/易胜博/威廉/Interwetten/马会等）**：提取**整张赛前变动表**——表格中每一行，只要该行时间早于开球且比分为 0:0，均按行提取（时间、盘口或赔率、水位等，依页面表头）。用于第 3/4/5 步的「赔率变动轨迹」分析、相同时点交叉认证与每家意图判断。
+- **其他公司**：提取**整张赛前变动表**——表格中每一行（时间早于开球且比分为 0:0 的），按行提取（时间、盘口/赔率、水位等，依页面表头）。用于第 3/4/5 步的「赔率变动轨迹」分析、相同时点交叉认证与每家意图判断。
 
-**关键提取要点：**
+**表格字段**（以 vip.titan007 页面表头为准）：
 
-- **只取赛前赔率，过滤滚球数据**：赔率变化表格中，如果某行的时间晚于开球时间，或比分列显示非 0:0（如 1:0），则为滚球赔率，必须忽略。只保留比赛开始前的赔率变化记录。
-- 表格行序：**最后一行** = 初盘（最早开出），**第一行（赛前）** = 即时盘（收盘）；中间每一行 = 一次变动记录。
-- 其他公司：每行提取字段示例（以欧指页为例）——`时间 | 主胜 | 平 | 客胜 | 比分`；亚让页——`时间 | 盘口 | 主水 | 客水 | 比分`；大小球页——`时间 | 盘口 | 大球水 | 小球水 | 比分`。实际以 vip.titan007 页面的表头列为准。
-- 重点关注：初盘 vs 即时盘的方向变化；**以及**各公司在**相同时点**的变动是否一致（共识/分歧），用于交叉认证与意图判断。
+- 欧指页：`时间 | 主胜 | 平 | 客胜 | 比分`
+- 亚盘页：`时间 | 盘口 | 主水 | 客水 | 比分`
+- 大小球页：`时间 | 盘口 | 大球水 | 小球水 | 比分`
 
-**效率优化：**
+表格行序：**最后一行** = 初盘（最早），**第一行（赛前）** = 即时盘（收盘）；中间 = 每次变动。
 
-- 每场比赛需抓取约 15-18 个赔率页面（5-6 家公司 x 3 种赔率类型）
-- 用新标签页打开，提取后立即关闭
-- 每个页面间隔 1-2 秒，避免过快请求
-- 如果某公司页面加载失败，跳过该公司，用其他公司数据继续分析
+#### 8. 存档原始赔率数据
 
-**并行标签页策略**（提速约 2-3 倍）：
+数据整理完成后，将**全部提取到的赔率原始数据**写入文件，供龙王检查和历史存档。
 
-同一家公司的 3 种赔率类型（亚让/大小球/欧指）可以**同时打开 3 个标签页**并行加载，而非串行等待：
+**目录结构**：`data/{YYYY-MM-DD}/{matchId}/`，每家公司一个文件：
 
 ```
-# 同一公司的 3 个页面并行打开
-agent-browser tab new https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={cid}&l=0
-agent-browser tab new https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={cid}&l=0
-agent-browser tab new https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={cid}&l=0
-# 等待最后一个加载完成
-agent-browser wait --load networkidle
-# 逐个标签页 snapshot 提取数据后关闭（agent-browser tab {n} 切换，snapshot 后 tab close）
+data/2026-03-15/2784764/
+├── _meta.md       ← 元信息
+├── 澳彩.md
+├── 皇冠.md
+├── 365.md
+├── 威廉.md        ← 仅欧指
+├── 易胜博.md
+└── 平博.md        ← 各类型仅初盘+即时
 ```
 
-并行约束：
+**`_meta.md` 内容**：
 
-- **同时最多 5 个标签页**（避免浏览器内存压力和 titan007 限流）
-- 不同公司之间仍串行（每家公司间隔 1-2 秒）
-- 如遇疑似限流（连续 3 页超时），回退到逐页串行模式
+```markdown
+# {联赛} {主队} vs {客队}
+
+- 比赛 ID：{matchId}
+- 开球时间：{kickoff}
+- 抓取时间：{timestamp}
+- 抓取批次：共 {N} 批
+- 缺失公司：{无 / 列出打开失败的公司及类型}
+```
+
+**公司文件内容**（以 `澳彩.md` 为例）：
+
+```markdown
+# 澳彩 (cid=1)
+
+## 亚盘
+
+| 时间        | 盘口      | 主水     | 客水     |
+| ----------- | --------- | -------- | -------- |
+| 03-15 09:30 | -0.5      | 0.88     | 0.96     |
+| 03-14 22:15 | -0.5      | 0.90     | 0.94     |
+| 03-14 18:00 | -0.25     | 0.85     | 0.99     |
+| **初盘**    | **-0.25** | **0.85** | **0.99** |
+
+## 大小球
+
+| 时间 | 盘口 | 大球 | 小球 |
+| ---- | ---- | ---- | ---- |
+| ...  | ...  | ...  | ...  |
+```
+
+**平博文件**（`平博.md`，每类型仅 2 行）：
+
+```markdown
+# 平博 (cid=47)
+
+## 亚盘
+
+| 时点   | 盘口  | 主水 | 客水 |
+| ------ | ----- | ---- | ---- |
+| 即时盘 | -0.5  | 0.95 | 0.89 |
+| 初盘   | -0.25 | 0.92 | 0.92 |
+
+## 大小球
+
+| 时点   | 盘口 | 大球 | 小球 |
+| ------ | ---- | ---- | ---- |
+| 即时盘 | 2.5  | 0.96 | 0.88 |
+| 初盘   | 2.5  | 0.93 | 0.91 |
+
+## 欧指
+
+| 时点   | 主胜 | 平   | 客胜 |
+| ------ | ---- | ---- | ---- |
+| 即时盘 | 2.10 | 3.40 | 3.55 |
+| 初盘   | 2.15 | 3.35 | 3.50 |
+```
+
+**写入规则**：
+
+- 每家公司一个文件，文件内按赔率类型分 `##` section
+- 表格按时间倒序（最新在上，初盘在下），与网页原始顺序一致
+- 平博(47) 每类型只保留初盘 + 即时两行
+- 滚球数据**已过滤**，文件中不包含
+- 某类型抓取失败时，在对应 section 标注「❌ 抓取失败，已跳过」
+- 该公司完全未抓取（非必抓）则不生成文件
+- **同一 matchId 目录若已存在则覆盖**（重新分析时刷新数据）
+
+**用途**：
+
+- 龙王打开某公司文件，对照 vip.titan007.com 同一公司页面核对数字
+- 分析结果有疑问时，回溯数据源排查（数据提取错 vs 分析逻辑错）
+- 赛后复盘时，保留赛前赔率快照（赛后网站可能不再显示赛前变化）
+
+#### 并行约束与限流保护
+
+- **单场每批最多 9 个标签页**（3 家公司 × 3 种赔率），并行打开、浏览器并行加载
+- **批与批之间间隔 1-2 秒**
+- 如果某公司页面加载失败，**跳过该公司**，用其他公司数据继续分析
+- 如遇疑似限流（连续 3 页超时或空数据），**逐级回退**：9 tab → 6 tab → 3 tab → 逐页串行
+
+#### 数据防串号机制
+
+防止并行模式下数据归属错乱的三道防线：
+
+1. **架构隔离**（跨比赛）：每个 worker subagent 有独立浏览器上下文，比赛 A 的 worker 无法访问比赛 B 的 tab，从根源杜绝跨比赛串号。
+2. **URL 校验**（同比赛内）：每批 tab 打开后，通过 `tabs list` 获取每个 tab 的真实 URL，解析 matchId + companyId + type 三元组建立 verified_tabs 映射。**不信任 tab 打开顺序**，只信任 URL。
+3. **异常处理**：URL 中 matchId 与当前比赛不符 → 该 tab 作废不提取；同一 (companyId, type) 出现重复 tab → 只取第一个；预期的 tab 缺失 → 记录缺失，后续分析跳过该公司。
 
 ### 步骤 2：历史记忆召回
 
