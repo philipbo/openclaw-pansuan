@@ -1,7 +1,7 @@
 ---
 name: match-scraper
 description: "从球探体育(titan007)抓取竞彩足球赛程数据。在用户说「抓取赛程」「获取今日比赛」「今天有什么比赛」或赛前分析流程启动时使用。"
-metadata: { "openclaw": { "emoji": "🕷️" } }
+metadata: { "openclaw": { "emoji": "📆" } }
 ---
 
 # 赛程抓取（match-scraper）
