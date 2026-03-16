@@ -1329,8 +1329,10 @@ RLM 检测清单：
 **执行角色**：
 
 - **单场分析**（龙王指定单场 ID/编号/URL，且本批只有 1 场）：本步由执行 deep-analysis 的 subagent **直接追加写入** `memory/{今天日期}.md`。
-- **多场编排**（给推荐 / 定时 17:00）：本步**只产出**符合下方模板的 memory 摘要内容，并随 announce 返回；**不写文件**。由编排 subagent 收齐所有场次后**统一追加写入**，避免多 worker 并发写同一文件。
-- **本批多场（主会话 spawn 多个 worker，如「分析 001 002 … 006」或「精选 1,2,3,4,5,6 场」）**：若 spawn 时的 **task 中明确写了「本批共 N 场，不要写入 memory」或「只 announce 返回 memory 摘要」**，则本步**不写文件**，只产出 memory 摘要并随 announce 返回；由主会话收齐各 worker 的 announce 后**统一追加写入**。这样可避免多 worker 并发写同一文件导致只保留 2 场的问题。
+- **多场编排**（给推荐 / 定时 17:00）：编排 spawn 时会在 task 中写明「本批共 N 场，不要写入 memory」，故本步**不写文件**，只产出 memory 摘要并随 announce 返回；由编排 subagent 收齐所有场次后**统一追加写入**。
+- **本批多场（主会话 spawn 多个 worker，如「分析 001 002 … 006」或「精选 1,2,3,4,5,6 场」）**：若 spawn 时的 **task 中明确写了「本批共 N 场，不要写入 memory」或「只 announce 返回 memory 摘要」**，则本步**不写文件**，只产出 memory 摘要并随 announce 返回；由主会话收齐各 worker 的 announce 后**统一追加写入**。
+
+**判断方式**：只要 task 中出现「本批共 N 场」且要求不写 memory / 只 announce 返回摘要，就**不写文件**，只产出摘要随 announce 返回；由 spawn 方（编排或主会话）收齐后统一写。这样可避免多 worker 并发写同一文件导致只保留部分场次的问题。
 
 **⚠️ memory 写摘要，不写全文**：完整 11 步分析已通过 messaging 推送给龙王，memory 只需存**结构化摘要**供复盘使用，避免 memory 文件膨胀到数千行。**禁止**将分析报告或摘要写入 `data/` 目录；`data/` 仅用于步骤 1.5 的赔率原始数据存档。
 

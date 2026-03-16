@@ -206,13 +206,13 @@ MEMORY.md 维护规则：
 1. 读取 `skills/match-scraper/SKILL.md`，执行赛程抓取，写入 memory
 2. 读取 `skills/match-screening/SKILL.md`，执行初筛，写入 memory
 3. 推送候选列表给龙王（通过 messaging）
-4. 对每场初筛通过的比赛，`sessions_spawn` 一个 worker sub-subagent：
+4. 对每场初筛通过的比赛，`sessions_spawn` 一个 worker sub-subagent。**task 中必须写明**：「本批共 N 场（N = 本场初筛通过的总场次数），你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果」，避免多 worker 并发写同一文件导致只保留部分场次。示例：
    ```
    sessions_spawn:
-     task: "深度分析 [{联赛}] {主队} vs {客队}（ID: {matchId}）。读取 skills/deep-analysis/SKILL.md。严格按照模板，执行完整 10 步分析；先完成全部 10 步再推送，超 4000 字须分段。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果。"
+     task: "深度分析 [{联赛}] {主队} vs {客队}（ID: {matchId}）。本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果。读取 skills/deep-analysis/SKILL.md。严格按照模板，执行完整 10 步分析；先完成全部 10 步再推送，超 4000 字须分段。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（含 memory 摘要）。"
      label: "deep-analysis-{matchId}"
    ```
-5. 等待所有 worker 的 announce 回来，收集分析结果
+5. 等待所有 worker 的 announce 回来，收集分析结果（含各场 memory 摘要）
 6. 读取 `skills/recommendation/SKILL.md`，基于收集到的结果执行精选 + 串关（**初筛通过 0 场时**也执行 recommendation，输入 0 场，生成标准格式的 `## 推荐`「今日无候选场次」）
 7. 推送汇总消息给龙王（通过 messaging）
 8. 写入 memory：**深度分析摘要** — 先读取当日 memory 中已有 `## 深度分析`，将本批各场摘要按「新场次追加、同场用 matchId 替换」合并后写回，不覆盖已有场次；**推荐** — 由 recommendation 步骤 5 写入
