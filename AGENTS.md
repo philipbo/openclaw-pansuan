@@ -247,8 +247,8 @@ MEMORY.md 维护规则：
 **共同步骤**（上述校验通过后或输入为 ID/URL 时）：
 
 1. 推送「⚡ 正在分析 N 场比赛…」
-2. 对每场比赛 `sessions_spawn` 一个 depth-1 worker subagent（并行），不得在主会话中执行深度分析
-3. 保持空闲，收齐所有 announce 后**执行 recommendation**（精选 + 汇总推送 + 步骤 5 写入 memory），与场景 6 一致，便于当日复盘能读到推荐
+2. 对每场比赛 `sessions_spawn` 一个 depth-1 worker subagent（并行），不得在主会话中执行深度分析。**若本批场次 > 1**，在 spawn 的 **task 中必须写明**：「本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果」，避免多 worker 并发写同一文件导致只保留部分场次。
+3. 保持空闲，收齐所有 announce 后：**若本批场次 > 1**，先**从各 announce 中取出 memory 摘要，按 deep-analysis 输出 2 的追加/同场替换规则合并写入当日 `## 深度分析`**（先读已有 section，本批各场追加、同 matchId 替换），再执行 recommendation；若本批只有 1 场则直接执行 recommendation。
 
 **⚠️ 强制规则**：只要有待分析的场次（≥1 场），深度分析**一律在 subagent 中执行**。主会话**禁止**读取 skills/deep-analysis/SKILL.md 并在主会话跑 10 步分析或浏览器抓取——否则会阻塞主会话数分钟，且与「所有耗时流程在 subagent」的设计冲突。主会话只做：解析编号/ID、spawn worker、收齐 announce、**执行 recommendation（含写 memory）**。
 
@@ -297,8 +297,8 @@ MEMORY.md 维护规则：
 
 1. 从当日 memory **最后一个以 `## 初筛结果` 开头的 section** 得到当前候选列表；龙王说的「1,3,5」指**该列表中的序号**（第 1 场、第 3 场、第 5 场），不是竞彩编号；若龙王说「精选 001 003 005」则按编号在列表中定位对应场次。
 2. 推送「⚡ 正在精选分析…」
-3. 对上述场次，每场 `sessions_spawn` 一个 depth-1 worker subagent 并行深度分析
-4. 保持空闲，收齐 announce 后**执行 recommendation**（精选 + 汇总推送 + 步骤 5 写入 memory）
+3. 对上述场次，每场 `sessions_spawn` 一个 depth-1 worker subagent 并行深度分析。**若场次 > 1**，在 spawn 的 **task 中必须写明**：「本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果」。
+4. 保持空闲，收齐 announce 后：**若场次 > 1**，先**从各 announce 中取出 memory 摘要，按 deep-analysis 输出 2 的规则合并写入当日 `## 深度分析`**，再执行 recommendation；若只有 1 场则直接执行 recommendation（精选 + 汇总推送 + 步骤 5 写入 memory）。
 
 #### 不使用 Subagent 的情况
 
