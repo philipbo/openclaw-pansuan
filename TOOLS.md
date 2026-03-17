@@ -71,7 +71,7 @@ URL 规则：`https://zq.titan007.com/analysis/{matchId}cn.htm`
 | 阵容情况             | 伤停球员名单、缺阵原因、上场首发/替补阵容及评分                  | 伤停分析                          |
 | 赛前简报             | AI 生成的赛前分析文字                                            | 辅助参考                          |
 | 本赛季数据统计比较   | 战绩统计、得失球统计、净胜球分布                                 | 基本面分析                        |
-| 即时走势（让/大/欧） | 亚盘让球、大小球、欧赔的初盘和即时盘变化                         | 盘赔分析（页面顶部标签切换）      |
+| 即时走势（亚/大/欧） | 亚盘、大小球、欧赔的初盘和即时盘变化                             | 盘赔分析（页面顶部标签切换）      |
 | **比分赔率（波胆）** | 皇冠波胆（Crow\*全指数区块内「波胆」表）                         | 深度分析步骤 4 比分 EV 与价值偏差 |
 
 #### ⚠️ 即时走势比较：获取数据环节最重的一步
@@ -216,7 +216,7 @@ URL 规则：`https://zq.titan007.com/analysis/{matchId}cn.htm`
 
 #### URL 模板
 
-**亚盘让球变化**（注意 companyID 大写 D）：
+**亚盘变化**（注意 companyID 大写 D）：
 
 ```
 https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0
