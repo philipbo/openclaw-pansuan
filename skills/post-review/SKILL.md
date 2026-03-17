@@ -175,23 +175,23 @@ agent-browser snapshot
 agent-browser tab close
 ```
 
-根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）：
+根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）。CLV 默认以**平博(47)**为基准，因此 companyId 固定为 47：
 
-- 让球推荐 → `https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0`
-- 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0`
-- 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0`
+- 让球推荐 → `https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID=47&l=0`
+- 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid=47&l=0`
+- 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid=47&l=0`
 
-优先用**平博(47)**作为收盘基准，平博不可用时退化到 365/威廉（胜平负）或 澳彩/皇冠（让球/大小球）。
+若平博页面无数据/无法获取收盘赔率，则该玩法 CLV 标记为「无数据」并不计入统计（暂不在本流程中自动切换到其他公司，避免混用市场口径）。
 
 **平博(47)是所有玩法 CLV 计算的首选基准**（三种赔率均已抓取），因为其收盘线最接近真实概率。
 
 3. 计算每场 CLV：
 
 ```
-CLV% = (平博推荐时赔率 / 平博收盘赔率 - 1) × 100
+CLV% = (平博即时赔率 / 平博收盘赔率 - 1) × 100
 
 ⚠️ 分子分母必须来自同一市场（平博），不能混用不同公司赔率。
-"平博推荐时赔率" = CLV 追踪表中的「平博即时赔率」列。
+"平博即时赔率" = CLV 追踪表中的「平博即时赔率」列。
 
 正值 = 推荐时平博赔率高于收盘（你比市场更早判断了方向）→ 正 CLV ✅
 负值 = 推荐时平博赔率低于收盘（市场后来朝反方向走）→ 负 CLV ❌
@@ -200,7 +200,7 @@ CLV% = (平博推荐时赔率 / 平博收盘赔率 - 1) × 100
 示例：平博推荐时 1.80，平博收盘 1.90 → (1.80/1.90 - 1) × 100 = -5.3% ❌
 ```
 
-4. 如果收盘赔率无法获取（页面无数据或比赛已过久），标记为「CLV 无数据」，不计入统计。**若 CLV 追踪数据表中某场某玩法缺少「平博推荐时赔率」**，该玩法 CLV 同样标记为「无数据」，不计入统计。
+4. 如果收盘赔率无法获取（页面无数据或比赛已过久），标记为「CLV 无数据」，不计入统计。**若 CLV 追踪数据表中某场某玩法缺少「平博即时赔率」**，该玩法 CLV 同样标记为「无数据」，不计入统计。
 
 #### 泊松模型质量 — 针对比分推荐
 
