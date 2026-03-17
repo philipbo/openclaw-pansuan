@@ -163,7 +163,7 @@ agent-browser wait --load networkidle
 
 **操作步骤**：
 
-1. 从记忆中读取「CLV 追踪数据」表，获取每场推荐的**平博即时赔率**（平博在推荐时刻的赔率）和比赛 ID
+1. 从记忆中读取「CLV 追踪数据」表，获取每场推荐的**基准公司即时赔率**（推荐时刻的赔率）、**CLV基准公司ID**（缺省 47）和比赛 ID
 
 2. 逐场获取收盘赔率（比赛开始前最后一次赔率）：
 
@@ -175,15 +175,15 @@ agent-browser snapshot
 agent-browser tab close
 ```
 
-根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）。CLV 默认以**平博(47)**为基准，因此 companyId 固定为 47：
+根据推荐方向选择 URL（**注意：亚让用 companyID 大写 D，其余用 companyid 小写 d**，与 deep-analysis 保持一致）。CLV **优先以「CLV 追踪数据」表中该行的 CLV基准公司ID 为准**；若该列缺失或为空，默认取 **47（平博）**：
 
-- 让球推荐 → `https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID=47&l=0`
-- 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid=47&l=0`
-- 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid=47&l=0`
+- 亚盘推荐 → `https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0`
+- 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0`
+- 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0`
 
 若平博页面无数据/无法获取收盘赔率，则该玩法 CLV 标记为「无数据」并不计入统计（暂不在本流程中自动切换到其他公司，避免混用市场口径）。
 
-**平博(47)是所有玩法 CLV 计算的首选基准**（三种赔率均已抓取），因为其收盘线最接近真实概率。
+**平博(47)是默认且首选的 CLV 基准**（三种赔率均已抓取），因为其收盘线最接近真实概率；若未来需要降级到其他公司，应确保同一行的「推荐时赔率（分子）」与「收盘赔率（分母）」来自同一 companyId，避免混用口径。
 
 3. 计算每场 CLV：
 
@@ -191,7 +191,7 @@ agent-browser tab close
 CLV% = (平博即时赔率 / 平博收盘赔率 - 1) × 100
 
 ⚠️ 分子分母必须来自同一市场（平博），不能混用不同公司赔率。
-"平博即时赔率" = CLV 追踪表中的「平博即时赔率」列。
+"基准公司即时赔率" = CLV 追踪表中的「平博即时赔率」列（当前仍以平博为默认命名；当 companyId 非 47 时，该列应填对应公司的即时赔率）。
 
 正值 = 推荐时平博赔率高于收盘（你比市场更早判断了方向）→ 正 CLV ✅
 负值 = 推荐时平博赔率低于收盘（市场后来朝反方向走）→ 负 CLV ❌
@@ -271,7 +271,7 @@ memory_get memory/{复盘日期}.md
 ```
 💡 教训：盘赔分歧时欧指比亚盘更可靠
    来源：[英超] 热刺 vs 利物浦（未中）
-   详情：亚盘看好热刺让球，但欧指和平博都偏向客胜。最终选了亚盘方向，实际客胜。
+  详情：亚盘看好热刺让球（历史用词：亚盘方向），但欧指和平博都偏向客胜。最终选了亚盘方向，实际客胜。
    行动：欧指与亚盘方向矛盾时，优先信任欧指（尤其平博方向），亚盘可能受注码影响失真。
 
 💡 教训：赛程陷阱信号在豪门 vs 弱旅局中有效率极高
