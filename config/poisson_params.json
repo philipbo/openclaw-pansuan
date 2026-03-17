@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "low_score_factors": {
+    "0:0": 1.1,
+    "1:0": 1.05,
+    "0:1": 1.05,
+    "1:1": 1.1
+  },
+  "max_goals": 8,
+  "lambda_bounds": {
+    "min": 0.4,
+    "max": 3.5
+  },
+  "ou_anchor": {
+    "enabled": false,
+    "w": 0.25,
+    "p_over": 0.5,
+    "search": {
+      "lo": 0.2,
+      "hi": 6.0,
+      "iters": 20
+    },
+    "quarter_line_mapping": {
+      "2.25": 2.5,
+      "2.75": 3.0
+    }
+  }
+}

@@ -44,3 +44,5 @@ go.work.sum
 # 工作空间/Agent 本地配置，不纳入版本管理
 .openclaw
 
+*.pyc
+__pycache__/
