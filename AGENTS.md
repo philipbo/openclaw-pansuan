@@ -212,7 +212,7 @@ MEMORY.md 维护规则：
      task: "深度分析 [{联赛}] {主队} vs {客队}（ID: {matchId}）。本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果。读取 skills/deep-analysis/SKILL.md。严格按照模板，执行完整 10 步分析；先完成全部 10 步再推送，超 4000 字须分段。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（含 memory 摘要）。"
      label: "deep-analysis-{matchId}"
    ```
-5. 等待所有 worker 的 announce 回来，收集分析结果（含各场 memory 摘要）
+5. 等待所有 worker 的 announce 回来，收集分析结果（含各场 memory 摘要）。**若某条 announce 为「比赛已开始」等跳过状态**（无 memory 摘要），该场不计入分析结果，不写入 `## 深度分析`，汇总推荐时也不含该场；只合并含完整 memory 摘要的 announce。
 6. 读取 `skills/recommendation/SKILL.md`，基于收集到的结果执行精选 + 串关（**初筛通过 0 场时**也执行 recommendation，输入 0 场，生成标准格式的 `## 推荐`「今日无候选场次」）
 7. 推送汇总消息给龙王（通过 messaging）
 8. 写入 memory：**深度分析摘要** — 先读取当日 memory 中已有 `## 深度分析`，将本批各场摘要按「新场次追加、同场用 matchId 替换」合并后写回，不覆盖已有场次；**推荐** — 由 recommendation 步骤 5 写入
@@ -248,7 +248,7 @@ MEMORY.md 维护规则：
 
 1. 推送「⚡ 正在分析 N 场比赛…」
 2. 对每场比赛 `sessions_spawn` 一个 depth-1 worker subagent（并行），不得在主会话中执行深度分析。**若本批场次 > 1**，在 spawn 的 **task 中必须写明**：「本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果」，避免多 worker 并发写同一文件导致只保留部分场次。
-3. 保持空闲，收齐所有 announce 后：**若本批场次 > 1**，先**从各 announce 中取出 memory 摘要，按 deep-analysis 输出 2 的追加/同场替换规则合并写入当日 `## 深度分析`**（先读已有 section，本批各场追加、同 matchId 替换），再执行 recommendation；若本批只有 1 场则直接执行 recommendation。
+3. 保持空闲，收齐所有 announce 后：**仅对含 memory 摘要的 announce**（排除因「比赛已开始」等跳过的简要回传）按 deep-analysis 输出 2 的规则合并写入 `## 深度分析`；再执行 recommendation。若本批只有 1 场则直接执行 recommendation。
 
 **⚠️ 强制规则**：只要有待分析的场次（≥1 场），深度分析**一律在 subagent 中执行**。主会话**禁止**读取 skills/deep-analysis/SKILL.md 并在主会话跑 10 步分析或浏览器抓取——否则会阻塞主会话数分钟，且与「所有耗时流程在 subagent」的设计冲突。主会话只做：解析编号/ID、spawn worker、收齐 announce、**执行 recommendation（含写 memory）**。
 
@@ -298,7 +298,7 @@ MEMORY.md 维护规则：
 1. 从当日 memory **最后一个以 `## 初筛结果` 开头的 section** 得到当前候选列表；龙王说的「1,3,5」指**该列表中的序号**（第 1 场、第 3 场、第 5 场），不是竞彩编号；若龙王说「精选 001 003 005」则按编号在列表中定位对应场次。
 2. 推送「⚡ 正在精选分析…」
 3. 对上述场次，每场 `sessions_spawn` 一个 depth-1 worker subagent 并行深度分析。**若场次 > 1**，在 spawn 的 **task 中必须写明**：「本批共 N 场，你不要写入 memory，只通过 announce 返回包含 memory 摘要的结构化结果」。
-4. 保持空闲，收齐 announce 后：**若场次 > 1**，先**从各 announce 中取出 memory 摘要，按 deep-analysis 输出 2 的规则合并写入当日 `## 深度分析`**，再执行 recommendation；若只有 1 场则直接执行 recommendation（精选 + 汇总推送 + 步骤 5 写入 memory）。
+4. 保持空闲，收齐 announce 后：**仅对含 memory 摘要的 announce**（排除因「比赛已开始」等跳过的简要回传）按 deep-analysis 输出 2 的规则合并写入 `## 深度分析`，再执行 recommendation（精选 + 汇总推送 + 步骤 5 写入 memory）。
 
 #### 不使用 Subagent 的情况
 
