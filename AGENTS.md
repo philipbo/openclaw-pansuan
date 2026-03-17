@@ -316,7 +316,7 @@ MEMORY.md 维护规则：
 - **Subagent 只注入 AGENTS.md + TOOLS.md**：不含 SOUL.md、IDENTITY.md、USER.md。分析型任务不受影响，但推送消息时语气可能偏工具化
 - **Memory 写入竞争**：多个 worker 并行写 memory 时，编排 subagent 统一收集结果后一次性写入，避免并发冲突
 - **浏览器资源**：每个 subagent 有独立标签页。深度分析每场约需 15-18 个赔率页面，3 场并行 = ~54 个页面请求。通过 worker 内部的频率控制（每页间隔 1-2 秒）避免触发 titan007 限流
-- **Announce 回传内容**：worker 的 announce 必须包含结构化数据（JSON 格式的综合评估 + 泊松概率表 + memory 摘要），编排 subagent 才能正确汇总
+- **Announce 回传内容**：worker 的 announce 必须包含结构化数据（JSON 格式的综合评估 + 泊松概率表 + memory 摘要），编排 subagent 才能正确汇总。若该场 deep-analysis 抓取了平博，announce 中宜包含该场胜平负/让球/大小球的平博推荐时赔率，供 recommendation 填写 CLV 追踪表。
 
 ### 龙王中途干预
 
