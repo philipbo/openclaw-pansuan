@@ -55,12 +55,12 @@ def main() -> None:
         assert corr_pr > raw_pr, f"轻量修正应提升 {key} 概率"
         print(f"✓ {key} 概率提升: {raw_pr*100:.2f}% → {corr_pr*100:.2f}% (+{(corr_pr-raw_pr)*100:.2f}%)")
 
-    # Top 3 仍合理
-    top3 = [s for s, _ in scores_corr[:3]]
-    print(f"✓ 轻量修正后 Top 3 比分: {top3}")
+    # Top 4 展示口径
+    top4 = [s for s, _ in scores_corr[:4]]
+    print(f"✓ 轻量修正后 Top 4 比分: {top4}")
 
     # 与 SKILL 内嵌公式结果一致（同一 λ 时 Top 1 应为 1:0）
-    assert top3[0] == "1:0", f"L1={L1}, L2={L2} 时 Top 1 应为 1:0，实际 {top3[0]}"
+    assert top4[0] == "1:0", f"L1={L1}, L2={L2} 时 Top 1 应为 1:0，实际 {top4[0]}"
 
     # λ 边界测试
     for la, lb in [(0.4, 0.4), (3.5, 2.0), (2.5, 1.8)]:

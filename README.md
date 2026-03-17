@@ -153,6 +153,7 @@ workspace/
 │   └── YYYY-MM-DD.md   # 每日分析日志
 ├── scripts/             # 工具脚本
 │   └── verify_poisson.py # 泊松比分公式验证
+│   └── check_consistency.py # 口径一致性自检（防回归）
 └── skills/              # 技能
     ├── match-scraper/   # 赛程抓取
     ├── match-screening/ # 初筛
@@ -194,6 +195,14 @@ workspace/
 这样同一时刻只有一个深度分析在使用浏览器，从根源上避免串号。未来若需要提速，可考虑「先集中抓取数据、再并行分析」的两阶段方案（待实施），详见 `docs/FLOW-AUDIT-2026-03.md`。
 
 ---
+
+## 开发者工具：口径一致性自检（可选）
+
+当你改了 `skills/` 或 `docs/` 的口径（如 EV 阈值、Top 4、大小球首选/次选），可以跑一次自检防止回退：
+
+```bash
+python3 scripts/check_consistency.py --print-ok
+```
 
 ## 注意事项
 
