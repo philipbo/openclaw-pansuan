@@ -53,7 +53,7 @@
 
 **现象**：龙王先后说「分析 004」「分析 005」，两个 depth-1 worker 同时运行。Worker-004 抓取澳彩后切到下一个 tab 时，实际切到了 worker-005 的分析页（墨尔本胜利 vs 任务中的浦项制铁），导致 matchId 不符，中断抓取。最终 worker-004 只有 1 家公司数据，分析基本报废。
 
-**根因**：`agent-browser` 是共享单例——所有 subagent 通过 Shell 调用时操作的是同一个浏览器进程的同一组 tab。两个 worker 的 `tab new` / `tab switch` / `snapshot` 交叉执行，tab 编号互踩，`snapshot` 可能抓到对方的页面。AGENTS.md 中「每个 worker 有独立浏览器标签页，互不干扰」的描述是错的。
+**根因**：`agent-browser` 是共享单例——所有 subagent 通过 Shell 调用时操作的是同一个浏览器进程的同一组 tab。两个 worker 的 `tab new` / `tab switch` / `snapshot` 交叉执行，tab 编号互踩，`snapshot` 可能抓到对方的页面。**已修复**：AGENTS.md 已改为明确口径——浏览器抓取必须串行排队（同一时刻仅 1 个 worker 操作浏览器）。
 
 **计划方案**：「先集中抓、再并行分析」——将 10 步流程拆为抓取阶段（串行用浏览器）和分析阶段（并行纯推理），兼顾正确性和速度。待实施。
 

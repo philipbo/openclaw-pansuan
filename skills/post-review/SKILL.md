@@ -181,7 +181,7 @@ agent-browser tab close
 - 胜平负推荐 → `https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0`
 - 大小球推荐 → `https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0`
 
-若平博页面无数据/无法获取收盘赔率，则该玩法 CLV 标记为「无数据」并不计入统计（暂不在本流程中自动切换到其他公司，避免混用市场口径）。
+若**基准公司**页面无数据/无法获取收盘赔率，则该玩法 CLV 标记为「无数据」并不计入统计（暂不在本流程中自动切换到其他公司，避免混用市场口径）。
 
 **平博(47)是默认且首选的 CLV 基准**（三种赔率均已抓取），因为其收盘线最接近真实概率；若未来需要降级到其他公司，应确保同一行的「推荐时赔率（分子）」与「收盘赔率（分母）」来自同一 companyId，避免混用口径。
 
