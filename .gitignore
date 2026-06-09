@@ -46,3 +46,8 @@ go.work.sum
 
 *.pyc
 __pycache__/
+
+data
+analysis
+report
+memory
