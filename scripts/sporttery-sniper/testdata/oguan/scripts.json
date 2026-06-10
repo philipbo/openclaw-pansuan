@@ -1,0 +1,117 @@
+[
+  {
+    "src": "https://hm.baidu.com/hm.js?5ee25051f2fb71cfbf0bfa5bbd459b6f",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/Script/Lang.js?l=0",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/jsData/leftData/leftData.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/jsData/leftData/leftHtml.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "",
+    "len": 500,
+    "text": "\n        var meta = document.getElementsByTagName('meta');\n        for (i in meta) {\n            if (typeof meta[i].name != \"undefined\" && meta[i].name.toLowerCase() == \"description\") {\n                if (0 == 0) {\n                    meta[i].content = \"球探体育提供2023-2024赛季欧冠杯赛程积分，包含欧冠杯赛程赛果、比分指数、积分榜排名等专业体育数据！\";\n                } else {\n                    meta[i].content = \"球探體育提供2023-2024賽季欧冠杯賽程積分，包含欧冠杯賽程賽果、比分指數、積分榜排名等專業體育數據！\";\n                }\n                break;\n            }\n        }\n    "
+  },
+  {
+    "src": "https://zq.titan007.com/Script/BomHelper.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/Script/TimeZone.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "",
+    "len": 117,
+    "text": "var selectSeason = '2023-2024';var lang = 0; var jh = new Object();var teamHelper = new Object();var SclassID = 103; "
+  },
+  {
+    "src": "https://zq.titan007.com/jsData/matchResult/2023-2024/c103.js?version=2026060815",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/jsData/LeagueSeason/sea103.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/Script/LeagueOdds.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://zq.titan007.com/Script/page/cupMatch.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "",
+    "len": 1243,
+    "text": "\n        var leftDataObj = null;\n        var currCupMatch = null;\n        var currGroupId = \"\";\n        //资料库windows.onload函数\n        function infoBaseInit() {\n            try {\n\n                loadLang(lang);\n                //右手边\n                if (arrCup[8] == \"\")\n                    arrCup[8] = \"/images/nopic.gif\"\n                else\n                    arrCup[8] = \"/Image/\" + arrCup[8];\n\n                titleRightSeason();\n                SubSelect(arrCupKind, lang, -1);\n                "
+  },
+  {
+    "src": "https://zq.titan007.com/Script/Top.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://img.titan007.com/img2/headcommon.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://users.titan007.com/users/bfheader.aspx?backurl=https%3A%2F%2Fzq.titan007.com%2Fcn%2FCupMatch%2F2023-2024%2F103.html",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "",
+    "len": 93,
+    "text": "\n            leftDataObj = new LeftData(SclassID, \"League.aspx?\", \"CupMatch.aspx?\");\n        "
+  },
+  {
+    "src": "https://zq.titan007.com/Script/jquery-1.7.1.min.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "",
+    "len": 192,
+    "text": "\n    (function () {\n        var obj = $(\".sub_menu a:contains(赛程积分)\");\n        if (obj.prev())\n            obj.prev().addClass(\"off\");\n        obj.removeClass(\"off\").addClass(\"on\");\n    })();\n"
+  },
+  {
+    "src": "",
+    "len": 172,
+    "text": "\n            function UserEdit(id) {\n                window.location.href = '/aspx/edit/league.aspx?SclassID=' + id + '&oldUrl=' + location.pathname;\n            }\n        "
+  },
+  {
+    "src": "https://zq.titan007.com/Script/Bottom.js?ver=1",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://img.titan007.com/img/bottomcommon.js",
+    "len": 0,
+    "text": ""
+  },
+  {
+    "src": "https://s4.cnzz.com/z_stat.php?id=1261430177&web_id=1261430177",
+    "len": 0,
+    "text": ""
+  }
+]

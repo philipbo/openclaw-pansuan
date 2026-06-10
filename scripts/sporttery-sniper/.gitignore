@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+
+out
+
+.playwright-mcp/
+
+# macOS
+.DS_Store
+
+# IDEA
+.idea
+.vscode
+.cursor
+.claude
+*.iml

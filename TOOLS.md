@@ -1,351 +1,92 @@
 ## TOOLS.md - 工具使用指南
 
-Skills 定义了工具的工作方式。此文件用于记录你的具体信息——那些你的环境中独有的内容。
+Skills 定义了工具的工作方式。此文件记录当前仓库中可用的数据抓取工具与命令。
 
 ---
 
-## 核心工具：agent-browser
+## 核心工具：sporttery-sniper
 
-你的数据全部来自 `https://jc.titan007.com/index.aspx`，这是一个 JavaScript 动态渲染页面。
-必须使用 `agent-browser` CLI 操作，不能用普通 HTTP 请求。
+所有 titan007 数据抓取都通过仓库内脚本项目 `scripts/sporttery-sniper` 完成。正式工作流只使用该脚本。
 
-`agent-browser` 是一个独立的 headless 浏览器自动化 CLI 工具（[vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)），通过 Shell 调用。所有浏览器操作均以 `agent-browser` 命令执行。
+### 运行环境
 
-**关键须知：**
+- Node.js 20 或更新版本
+- 当前工作目录为仓库根目录
+- 脚本目录：`scripts/sporttery-sniper`
 
-- titan007 全站（含 `vip.titan007.com`）**无需登录**，任何人均可直接访问
-- 全站均为 **JS 动态渲染**，每次打开页面后必须 `agent-browser wait --load networkidle` 等待渲染完成
-- 比赛详情页默认显示「现场分析」，可以点击「分析」标签获取比赛的基本面信息数据
-- 比赛分析数据需通过直接访问 `https://zq.titan007.com/analysis/{matchId}cn.htm` 获取
-- 如果某场比赛数据缺失（页面无内容或模块缺失），直接跳过，不做无效重试
-- **赔率必须实时抓取**：赔率随时在变，每次分析都要从页面刷新最新赔率数据，不得使用记忆、向量数据库中的旧赔率
-- **深度分析每次均当首次**：不复用当日 memory 中的基本面，每次分析都抓取分析页（含基本面 + 即时走势）并抓取赔率变化
-- **只要赛前赔率，不要滚球赔率**：赔率变化历史中，只提取比赛开始前的数据。如果赔率变化表格中出现比赛中（滚球）的赔率记录（通常有比分列显示非 0:0，或时间晚于开球时间），必须过滤掉，只保留赛前变化记录
+若脚本目录不存在、命令失败、输出不是合法 JSON，当前流程应直接报告失败原因，不改用其它抓取方式。
 
-## titan007 页面结构
+### 赛程同步
 
-### 页面 1：赛程列表
+同步当前销售日赛程：
 
-URL: `https://jc.titan007.com/index.aspx`
-
-页面包含一个赛事表格，字段：
-
-- 场：竞彩编号
-- 赛事：联赛/杯赛名称
-- 时间：开球时间
-- 状态：未开场 / 进行中 / 已完场
-- 主队：主队名称
-- 比分：当前比分或最终比分
-- 客队：客队名称
-- 数据：包含「分析」链接，点击进入详情页
-
-页面特点：
-
-- 竞彩页面默认已显示全部赛事，无需点击「显示全部」
-- 支持日期切换（可查看前几天的赛程）
-- 支持按状态筛选（未开场/已完场/进行中）
-- 数据通过 JavaScript 动态加载
-
-### 页面 2：比赛分析详情页（核心数据页）
-
-URL 规则：`https://zq.titan007.com/analysis/{matchId}cn.htm`
-
-其中 `{matchId}` 是纯数字的比赛 ID（如 `2950977`），可从赛程列表中的「分析」链接提取。
-
-例如：`https://zq.titan007.com/analysis/2950977cn.htm`（里尔 vs 阿斯顿维拉）
-
-此页面包含以下数据模块（均为 JS 动态渲染）：
-
-| 模块                 | 内容                                                             | 用途                              |
-| -------------------- | ---------------------------------------------------------------- | --------------------------------- |
-| 联赛积分排名         | 双方总/主/客/近6场的赛、胜、平、负、得、失、净、积分、排名、胜率 | 基本面分析 + 战意判断             |
-| 对赛往绩             | 近期交手记录（可选主客相同）                                     | 交锋分析                          |
-| 近期战绩             | 双方近 N 场战绩（横版/竖版）                                     | 基本面分析                        |
-| 联赛盘路走势         | 亚让盘赢盘率、大小球率（全场/半场/主场/客场/近6场）              | 盘赔分析                          |
-| 相同盘路             | 同一初盘下的历史赢盘/走水/输盘率                                 | 盘赔分析                          |
-| 入球数分布           | 进球数 0/1/2/3/4+、上下半场分布                                  | 大小球分析                        |
-| 半全场               | 半场-全场结果组合统计                                            | 辅助分析                          |
-| 进球数/单双          | 大/小/走、单/双统计                                              | 大小球分析                        |
-| 进球时间             | 10 分钟区间的进球分布                                            | 辅助分析                          |
-| 未来五场             | 双方后续赛程与间隔天数                                           | 轮换/体能风险判断                 |
-| 阵容情况             | 伤停球员名单、缺阵原因、上场首发/替补阵容及评分                  | 伤停分析                          |
-| 赛前简报             | AI 生成的赛前分析文字                                            | 辅助参考                          |
-| 本赛季数据统计比较   | 战绩统计、得失球统计、净胜球分布                                 | 基本面分析                        |
-| 即时走势（亚/大/欧） | 亚盘、大小球、欧赔的初盘和即时盘变化                             | 盘赔分析（页面顶部标签切换）      |
-| **比分赔率（波胆）** | 皇冠波胆（Crow\*全指数区块内「波胆」表）                         | 深度分析步骤 4 比分 EV 与价值偏差 |
-
-#### ⚠️ 即时走势比较：获取数据环节最重的一步
-
-**仅在使用分析页时**需要此步骤。分析页 URL：`https://zq.titan007.com/analysis/{matchId}cn.htm`。赔率变化详情页、赛程列表页等其它页面**没有**「即时走势比较」表格，无需执行下面流程。
-
-**即时走势比较**是分析页上的表格：各公司（澳*、Crow*、36*、易* 等）的**欧洲指数（主胜/和局/客胜）、实际最新亚盘、进球数**的**初盘 + 即时**。初筛阶段 5、深度分析步骤 1 都依赖它。**若这里拿错或拿不到，后续分析都是浪费。**
-
-- 该区块由 **JavaScript 动态渲染**，纯 HTTP fetch 拿不到，必须用 **agent-browser**（或其它浏览器自动化）打开分析页后 snapshot 提取。
-- 页面上**有时默认不显示**「即时走势比较」表格（取决于用户/环境是否点过「定制」）。若 snapshot 后**没有**该表格或只有标题无数据，必须按下面流程先把它调出来，再 snapshot 提取。
-
-**当页面上没有「即时走势比较」表格时的操作流程（必做）：**
-
-1. 在分析页 snapshot 后，从输出中查找**可点击元素**：文案为 **「定制」** 的链接/按钮（可能在页面顶部或右侧）。若该元素不在视窗内，先 `agent-browser scroll` 使其进入视窗再点击。
-2. **点击「定制」**（使用 snapshot 中该元素的 ref：`agent-browser click <ref>`）。
-3. **等待弹窗**：`agent-browser wait 2000`（或 1500～3000 ms），等待「分析数据定制」弹窗出现。
-4. 再次 **snapshot**，在弹窗内找到文案为 **「指数比较」** 的列表项，**点击「指数比较」**（`agent-browser click <该 ref>`）。
-5. 在弹窗内找到 **「确定」** 按钮，**点击「确定」**（`agent-browser click <该 ref>`）。
-6. **等待弹窗关闭**：`agent-browser wait 1000`。
-7. 再次 **snapshot**，此时页面上应出现「即时走势比较」表格（含 初/即时/滚球、各公司、欧洲指数、实际最新亚盘、进球数 等列），从本次 snapshot 中提取所需数据。
-
-**注意**：snapshot 返回的 ref（如 e371、e510、e512）每次运行可能不同，**不要写死 ref**。必须在当次 snapshot 输出中按 **name/文案** 查找「定制」「指数比较」「确定」对应的 ref，再对该 ref 执行 click。
-
-#### 提取比分赔率（波胆）
-
-**时机**：与基本面、即时走势比较**同一次**分析页 snapshot 一并提取，无需单独打开或点击。
-
-**位置**：分析页上的 **「Crow\*全指数」**（皇冠全指数）区块内，有表头为 **「波胆」** 的表格。得到「比分→赔率」映射后供深度分析步骤 4 做 EV 与价值偏差。
-
-**HTML 结构示例**（titan007 分析页）：
-
-```html
-<table ...>
-  <tbody>
-    <tr class="bui">
-      <td><b>波胆</b></td>
-      <td>1:0</td>
-      <td>2:0</td>
-      <td>2:1</td>
-      <td>3:0</td>
-      <td>3:1</td>
-      <td>3:2</td>
-      <td>4:0</td>
-      <td>4:1</td>
-      <td>4:2</td>
-      <td>4:3</td>
-      <td>0:0</td>
-      <td>1:1</td>
-      <td>2:2</td>
-      <td>3:3</td>
-      <td>4:4</td>
-    </tr>
-    <tr class="odds">
-      <td>主</td>
-      <td>8.1</td>
-      <td>11.5</td>
-      <td>7.9</td>
-      <td>25</td>
-      <td>16</td>
-      <td>22</td>
-      <td>60</td>
-      <td>40</td>
-      <td>50</td>
-      <td>85</td>
-      <td rowspan="2">12</td>
-      <td rowspan="2">5.9</td>
-      <td rowspan="2">11.5</td>
-      <td rowspan="2">40</td>
-      <td rowspan="2">170</td>
-    </tr>
-    <tr class="odds">
-      <td>客</td>
-      <td>9.5</td>
-      <td>16</td>
-      <td>9.5</td>
-      <td>35</td>
-      <td>22</td>
-      <td>25</td>
-      <td>100</td>
-      <td>60</td>
-      <td>65</td>
-      <td>95</td>
-    </tr>
-  </tbody>
-</table>
+```bash
+cd scripts/sporttery-sniper
+npm run schedule -- --format openclaw-json
 ```
 
-**列与比分对应**：
+同步指定销售日：
 
-- **第一行数据（主）**：第 2～11 列 → 1:0、2:0、2:1、3:0、3:1、3:2、4:0、4:1、4:2、4:3；第 12～16 列（rowspan=2，仅此行有值）→ 0:0、1:1、2:2、3:3、4:4。
-- **第二行数据（客）**：第 2～11 列 → 0:1、0:2、1:2、**0:3、1:3**、2:3、0:4、1:4、2:4、3:4。**勿颠倒**：列头 3:0 对应客 0:3、列头 3:1 对应客 1:3（0:3 赔率通常 > 1:3，可作自检）。
-
-**提取步骤**：在 snapshot/HTML 中定位第一格为「波胆」的 `<table>`（或含 `class="bui"` 且首格为波胆的 tr）→ 取下一行（主）每个 `<td>` 的文本，按上表对应到比分；再取再下一行（客）前 10 个 `<td>` 按**列顺序** 0:1、0:2、1:2、0:3、1:3、2:3、0:4、1:4、2:4、3:4 拼成「比分→赔率」映射。深度分析步骤 4 用该映射算 EV 时：**EV = P×O**，P 为泊松概率**小数**（如 0.105），O 为该比分对应赔率；输出前自检每行 EV 是否等于该行 P×O。
-
-**提取结果示例**（按上表解析后）：
-
-```
-1:0→8.1  2:0→11.5  2:1→7.9  3:0→25  3:1→16  3:2→22  4:0→60  4:1→40  4:2→50  4:3→85
-0:0→12  1:1→5.9  2:2→11.5  3:3→40  4:4→170
-0:1→9.5  0:2→16  1:2→9.5  0:3→35  1:3→22  2:3→25  0:4→100  1:4→60  2:4→65  3:4→95
+```bash
+cd scripts/sporttery-sniper
+npm run schedule -- --date 2026-06-11 --format openclaw-json
 ```
 
-若页面上没有「Crow\*全指数」或其中无「波胆」表，则本场无皇冠波胆数据，深度分析步骤 4 只出概率与公平赔率并标注「未做价值偏差」。
+输出要求：
 
-### 页面 3：赔率变化详情页（盘赔深度数据）
+- JSON 顶层 `kind` 必须为 `openclaw.schedule`
+- `matches` 必须为数组
+- 每场至少读取 `no`、`matchId`、`league`、`leagueLevel`、`kickoffTime`、`status`、`homeTeam`、`awayTeam`、`analysisUrl`
 
-通过比赛 ID + 公司 ID 拼接 URL，获取各公司的赔率变化历史。
+### 单场深度分析数据抓取
 
-#### 博彩公司 ID 表
+按比赛 ID 抓取：
 
-| 公司        | companyID | 亚让/进球数                 | 胜平负(欧指)                | 备注                                                               |
-| ----------- | --------- | --------------------------- | --------------------------- | ------------------------------------------------------------------ |
-| 澳彩        | 1         | **必抓（4家之一）**         | 亚洲联赛必抓（5家之一）     | 亚让/大小球 4家交叉认证；亚洲联赛 4家+马会共5家                    |
-| 皇冠        | 3         | **必抓（4家之一）**         | 亚洲联赛必抓（5家之一）     | 同上                                                               |
-| 365         | 8         | **必抓（4家之一）**         | **必抓（非亚洲）**          | 欧指欧洲与威廉两家；德国为威廉+365+Interwetten 三家；亚洲为5家之一 |
-| 威廉希尔    | 9         | 备选                        | **必抓（非亚洲）**          | 欧洲与365两家；德国为威廉+365+Interwetten 三家                     |
-| 易胜博      | 12        | **必抓（4家之一）**         | 亚洲联赛必抓（5家之一）     | 亚让/大小球 4家；亚洲联赛 5家                                      |
-| Interwetten | 19        | 备选                        | **必抓（德国联赛）**        | 德甲/德乙与威廉、365 三家交叉认证                                  |
-| 平博        | 47        | 可选抓（仅复盘 CLV）        | 可选抓（仅复盘 CLV）        | 不参与分析依据；若抓取仅存档供复盘 CLV                             |
-| 香港马会    | 48        | **亚洲联赛必抓（5家之一）** | **亚洲联赛必抓（5家之一）** | 亚洲联赛亚让/大小球/欧指均为 4家+马会共 5 家交叉认证               |
-
-**抓取优先级**：
-
-亚让：
-
-- **必抓 4 家**：澳彩(1)、皇冠(3)、365(8)、易胜博(12)。先对 4 家分别分析并**交叉认证**。平博不参与分析；若需复盘 CLV 可**可选抓**平博，仅存档。
-- **一致性规则**：4 家（或亚洲 5 家）中若有 **1 家与其余共识不一致** → **严格警惕冷门**（该公司可能掌握额外信息）。
-- **亚洲联赛**：4 家 + 马会(48) 共 **5 家必抓**，5 家交叉认证。
-
-进球数(大小球)：
-
-- **必抓 4 家**：澳彩(1)、皇冠(3)、365(8)、易胜博(12)。先对 4 家分别分析并**交叉认证**。平博不参与分析；若需复盘 CLV 可**可选抓**平博，仅存档。
-- **一致性规则**：4 家（或亚洲 5 家）中若有 **1 家与其余共识不一致** → **严格警惕冷门**（该公司可能掌握额外信息）。
-- **亚洲联赛**：4 家 + 马会(48) 共 **5 家必抓**，5 家交叉认证。
-
-胜平负(欧指/欧洲指数)：
-
-- **平博(47) 不参与分析**；若需复盘 CLV 可**可选抓**平博欧指，抓取后仅存档，不参与本步结论。
-- **欧洲赛事（含非德国）**：必抓**威廉(9)、365(8)**，**两家交叉认证**。
-- **德国联赛（德甲/德乙）**：必抓**威廉(9)、365(8)、Interwetten(19)**，**三家交叉认证**。
-- **亚洲联赛**：必抓**澳彩(1)、皇冠(3)、365(8)、易胜博(12)、马会(48)**，**5 家交叉认证**（4 家 + 马会）。
-
-#### URL 模板
-
-**亚盘变化**（注意 companyID 大写 D）：
-
-```
-https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={companyId}&l=0
+```bash
+cd scripts/sporttery-sniper
+npm run analyze -- 2990354 --history-window all --format openclaw-json
 ```
 
-**大小球(进球数)变化**：
+按 titan007 分析页 URL 抓取：
 
-```
-https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={companyId}&l=0
-```
-
-**胜平负(欧指)变化**：
-
-```
-https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId}&l=0
+```bash
+cd scripts/sporttery-sniper
+npm run analyze -- https://zq.titan007.com/analysis/2990354cn.htm --history-window all --format openclaw-json
 ```
 
-#### 示例（比赛 ID=2950979）
+输出要求：
 
-以下为**欧洲赛事**示例（亚让/大小球 4 家，欧指威廉+365 两家）。**德国联赛**欧指需再加 Interwetten(19) 共 3 个 URL；**亚洲联赛**亚让/大小球/欧指均为 5 家（4 家+马会），各 5 个 URL。
+- JSON 顶层 `kind` 必须为 `openclaw.analysis`
+- `match` 必须包含 `matchId`、`league`、`kickoffTime`、`homeTeam`、`awayTeam`、`analysisUrl`
+- `context` 是给 agent 阅读和分析的 Markdown 上下文
+- `detail` / `markets` 是结构化原始数据，供写 memory、推荐和复盘使用
 
-| 类型   | 澳彩(1)                                 | 皇冠(3)          | 365(8)           | 威廉(9)          | 易胜博(12)        |
-| ------ | --------------------------------------- | ---------------- | ---------------- | ---------------- | ----------------- |
-| 亚让   | `handicap.aspx?id=2950979&companyID=1`  | `...companyID=3` | `...companyID=8` | `...companyID=9` | `...companyID=12` |
-| 进球数 | `overunder.aspx?id=2950979&companyid=1` | `...companyid=3` | `...companyid=8` | `...companyid=9` | `...companyid=12` |
-| 欧指   | `1x2.aspx?id=2950979&companyid=1`       | `...companyid=3` | `...companyid=8` | `...companyid=9` | `...companyid=12` |
+### 数据范围
 
-#### 页面数据格式
+sporttery-sniper 会抓取并输出：
 
-三种赔率变化页 URL（亚盘 companyID 大写，欧指/大小球 companyid 小写）：
+- 赛程：竞彩编号、比赛 ID、销售日、开球时间、赛事、状态、对阵、让球、竞彩胜平负指数
+- 基本面：比赛信息、技术统计、联赛积分、对赛往绩
+- 亚让和进球数：澳门、皇冠、易胜博、365bet、平博、188、香港马会
+- 欧赔：威廉、Interwetten、立博、365bet、澳门、皇冠、易胜博、平博、188、香港马会
+- 竞足数据：胜平负、让胜平负、总进球、比分/波胆
+- Crown 全指数：波胆、入球数、总入球
 
-- 胜平负：`https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={id}&l=0`
-- 亚盘：`https://vip.titan007.com/changeDetail/handicap.aspx?id={matchId}&companyID={id}&l=0`
-- 大小球：`https://vip.titan007.com/changeDetail/overunder.aspx?id={matchId}&companyid={id}&l=0`
+### 数据安全规则
 
-表格为多列，**数据行按列顺序**（与表头主客队名等对应）为：
+- **赔率必须实时抓取**：每次分析都重新运行 sporttery-sniper，不复用 memory 中旧赔率。
+- **只用赛前赔率**：sporttery-sniper 会过滤状态为“滚”的记录，并按开赛时间截断赛前变化历史。
+- **缺失不臆造**：如果某家公司或某类市场缺失，报告中必须标注数据缺口，并降低对应维度权重。
+- **平博用途**：平博可用于 CLV 存档和复盘，不作为 deep-analysis 的推荐依据。
 
-- **欧指页**：主胜 | 平 | 客胜 | **变化时间** | 状态。排序与时点用「变化时间」，格式 `MM-DD HH:mm`。
-- **亚盘页**：主水 | 盘口 | 客水 | **变化时间** | 状态。盘口如平手、平手/半球。
-- **大小球页**：大球水 | 盘口 | 小球水 | **变化时间** | 状态。盘口如 2.5、2/2.5。
+### 验证脚本
 
-行序：**第一行** = 赛前最新（即时盘），**最后一行** = 最早（初盘）；中间为每次变动。状态列：即/早/封/临等；(初盘) 表示初盘行。
-
-重点关注：
-
-- **只取赛前数据**：过滤掉比赛开始后的滚球赔率记录。判断方法：赔率行的时间 > 开球时间，或比分列出现非 0:0 的比分（如 1:0），均为滚球数据，必须忽略
-- **初盘**（赛前最早一条记录）vs **即时盘**（赛前最新一条记录，即收盘赔率）的变化方向
-- 盘口是否有升降（如从让平半升到让半球）
-- 水位变化是否异常（如主队水位从低水升到高水）
-
-## 浏览器操作标准流程
-
-### 抓取赛程列表
-
-```
-1. agent-browser open https://jc.titan007.com/index.aspx
-2. agent-browser wait --load networkidle
-3. agent-browser eval '(() => {
-     const rows = document.querySelectorAll("#table_live tr[id]");
-     const results = [];
-     for (const tr of rows) {
-       const cells = Array.from(tr.cells).map(td => td.textContent.trim());
-       let matchId = null;
-       const btn = tr.querySelector("a[onclick*=\"analysis(\"]");
-       if (btn) {
-         const m = btn.getAttribute("onclick").match(/analysis\((\d+)\)/);
-         if (m) matchId = m[1];
-       }
-       if (!matchId) {
-         const bar = tr.querySelector("div[id^=\"bar_\"]");
-         if (bar) { const m = bar.id.match(/bar_(\d+)/); if (m) matchId = m[1]; }
-       }
-       if (matchId) results.push({ id: tr.id, matchId, cells });
-     }
-     return results;
-   })()'
-   → 得到结构化赛程数据（matchId 从 onclick="analysis(ID)" 提取，每场一条）
+```bash
+cd scripts/sporttery-sniper
+npm test
 ```
 
-如果 eval 执行失败或返回空数据，改用 snapshot 获取页面文本再解析。
-
-### 抓取比赛分析详情
-
-已知比赛 ID 后，直接拼接分析页 URL，无需从列表页点击跳转：
-
-```
-1. 拼接 URL: https://zq.titan007.com/analysis/{matchId}cn.htm
-2. agent-browser tab new {分析页URL}  （在新标签页打开）
-3. agent-browser wait --load networkidle
-4. agent-browser snapshot
-   → 提取：积分排名、近期战绩、对赛往绩、未来五场、赛前简报、本赛季数据统计比较、未来五场等；若做深度分析，同次 snapshot 还须提取即时走势比较（见上「即时走势比较」）、比分赔率/波胆（见上「提取比分赔率」）
-5. 如需获取欧赔/亚盘/大小球的即时数据，点击页面顶部「亚让」「进球数」「胜平负」标签
-6. 完成后关闭标签页：agent-browser tab close
-```
-
-**提取比赛 ID 的方法**：
-
-- 赛程列表页的「析」链接的 `href` 为 `javascript:`，**不含** matchId。必须从该行内 **`onclick="analysis(数字)"`** 提取数字，或从 **`div[id^="bar_"]`** 的 `id`（如 `bar_2958853`）提取数字，即 matchId。
-- 分析页 URL 格式为 `https://zq.titan007.com/analysis/{matchId}cn.htm`，用上述 matchId 拼接即可。
-
-### 抓取已完场比分（复盘用）
-
-优先方案：直接打开推荐过的比赛分析页获取最终比分。
-
-```
-1. 从推荐记录中取出比赛 ID
-2. agent-browser tab new https://zq.titan007.com/analysis/{matchId}cn.htm
-3. agent-browser wait --load networkidle
-4. agent-browser snapshot → 提取最终比分（页面顶部会显示完场比分）
-5. 逐场获取，完成后关闭标签页：agent-browser tab close
-```
-
-备用方案（推荐记录中比赛 ID 丢失时）：回到赛程列表获取。
-
-```
-1. agent-browser open https://jc.titan007.com/index.aspx
-2. agent-browser wait --load networkidle
-3. 如果需要查看昨日赛程，切换日期选择器
-4. agent-browser snapshot 或 eval 提取已完场比赛的比分
-```
-
-## 操作注意事项
-
-1. **必须等待 JS 渲染**：每次 open/tab new 后都要 `agent-browser wait --load networkidle`，否则拿到空表格
-2. **ref 不跨页面稳定**：每次页面变化后重新 snapshot 获取新的 ref
-3. **优先用 eval**：直接执行 JS 提取 DOM 数据比解析 snapshot 文本更可靠
-4. **控制请求频率**：不要短时间内大量请求，每次操作间隔 1-2 秒
-5. **错误处理**：如果页面加载超时或数据为空，等待 3 秒后重试一次，仍然失败则跳过并记录
-6. **标签页管理**：查看详情页时用新标签页，避免丢失主页状态
+测试不需要真实网络请求，主要验证解析器、JSON 输出和本地样例。
 
 ## Subagent 工具
 
@@ -369,50 +110,12 @@ https://vip.titan007.com/changeDetail/1x2.aspx?id={matchId}&companyid={companyId
 ```
 # 赛程同步（单个 subagent）
 sessions_spawn:
-  task: "执行赛程同步。读取 skills/match-scraper/SKILL.md。严格按照模板，抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
+  task: "执行赛程同步。读取 skills/match-scraper/SKILL.md。严格按照模板，使用 scripts/sporttery-sniper 抓取今日全量赛程，通过 messaging 推送赛程列表给龙王，写入 memory/{今天日期}.md。"
   label: "match-sync"
 
 # 深度分析（编排 subagent 内部 spawn worker）
 sessions_spawn:
-  task: "深度分析 [英超] 阿森纳 vs 曼城（ID: 2950977）。读取 skills/deep-analysis/SKILL.md。严格按照模板，先完成全部 10 步再推送，超 4000 字须分段，执行完整 10 步分析。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（JSON 格式）。"
+  task: "深度分析 [英超] 阿森纳 vs 曼城（ID: 2950977）。读取 skills/deep-analysis/SKILL.md。严格按照模板，先使用 scripts/sporttery-sniper 抓取上下文，再完成全部 10 步分析；超 4000 字须分段。通过 messaging 推送分析报告给龙王。返回结构化综合评估结果（JSON 格式）。"
   label: "deep-analysis-2950977"
   runTimeoutSeconds: 900
 ```
-
-**task 编写要点**：
-
-- 必须包含要读取的 SKILL.md 路径（subagent 不自动知道 skill 位置）
-- 必须说明输出方式（messaging 推送 + announce 返回结构化数据）
-- 包含比赛的关键上下文（联赛、队名、ID），subagent 不继承主会话的上下文
-
-### /subagents — 管理运行中的 subagent
-
-| 命令                      | 用途                                       |
-| ------------------------- | ------------------------------------------ |
-| `/subagents list`         | 查看所有运行中和已完成的 subagent          |
-| `/subagents info {runId}` | 查看某个 subagent 的状态、耗时、session ID |
-| `/subagents log {runId}`  | 查看 subagent 的对话历史                   |
-| `/subagents kill {runId}` | 终止某个 subagent（级联终止其子 subagent） |
-| `/subagents kill all`     | 终止所有 subagent                          |
-
-### Announce 机制
-
-subagent 完成后自动向发起者（主会话或编排 subagent）推送结果：
-
-- depth-2 worker 完成 → announce 到 depth-1 编排 subagent
-- depth-1 编排 subagent 完成 → announce 到主会话
-- announce 包含：状态、结果内容、token 用量、运行时间
-
-编排 subagent 通过 announce 收集所有 worker 的分析结果后，统一执行推荐汇总和 memory 写入。
-
-## 其他工具
-
-### Memory 工具
-
-- `memory_search`：搜索历史分析记录，在深度分析时召回类似比赛的历史判断
-- `memory_get`：读取特定日期的分析日志
-
-### 消息推送
-
-- 使用 messaging 工具向龙王发送推荐和复盘报告
-- 如果 messaging 不可用，将内容写入当日 memory 并告知龙王

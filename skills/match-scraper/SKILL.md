@@ -6,13 +6,14 @@ metadata: { "openclaw": { "emoji": "📆" } }
 
 # 赛程抓取（match-scraper）
 
-从 `https://jc.titan007.com/index.aspx` 抓取当日竞彩足球全量赛程数据。
+通过仓库内 `scripts/sporttery-sniper` 脚本抓取当日竞彩足球全量赛程数据。
 
 ## 前提条件
 
-- `agent-browser` CLI 已安装且可用（通过 Shell 调用）
-- titan007 页面是 JS 动态渲染的，不能用普通 HTTP 请求
-- **每次执行都必须实时抓取最新页面数据**，不得复用之前抓取的旧数据
+- `sporttery-sniper` 位于当前仓库的 `scripts/sporttery-sniper` 目录。
+- `sporttery-sniper` 使用 titan007 的 XML/文本数据源。
+- 脚本失败时直接报告失败原因，不改用其它抓取方式。
+- **每次执行都必须实时运行脚本抓取最新数据**，不得复用之前抓取的旧数据。
 
 ## 销售窗口检查（定时任务触发时必须执行）
 
@@ -27,133 +28,45 @@ metadata: { "openclaw": { "emoji": "📆" } }
 
 ## 执行步骤
 
-### 步骤 1：打开赛程页面
+### 步骤 1：检查脚本目录
 
-```
-agent-browser open https://jc.titan007.com/index.aspx
-```
+确认 `scripts/sporttery-sniper/package.json` 存在。若不存在，直接报告「scripts/sporttery-sniper 不存在，无法同步赛程」，结束流程，不写 memory。
 
-### 步骤 2：等待页面渲染
+### 步骤 2：运行脚本同步赛程
 
-```
-agent-browser wait --load networkidle
-```
+销售日期使用当前自然日（`YYYY-MM-DD`）。手动查询非当天赛程时，将目标日期传给 `--date`。
 
-如果超时，再等 5 秒后重试一次。
-
-### 步骤 3：提取赛程数据
-
-竞彩页面（`jc.titan007.com`）默认已显示全部赛事，无需点击「显示全部」。直接提取。
-
-优先使用 eval 直接执行 JS 提取表格数据，**重点提取比赛 ID**：
-
-**⚠️ matchId 在 onclick 里，不在 href 里**。页面的「析」链接格式为 `<a href="javascript:" onclick="analysis(2958853);">析</a>`，必须从 `onclick` 属性提取 matchId，而非 `href`。
-
-**⚠️ rowspan=2**：每场比赛占两行 `<tr>`，matchId 所在的「数据」`<td>` 有 `rowspan="2"`，仅挂在第一行。脚本只提取含 `analysis()` onclick 的行，自动跳过第二行，避免重复。
-
-```
-agent-browser eval '(() => {
-  const rows = document.querySelectorAll("#table_live tr[id]");
-  if (!rows.length) return [];
-  const results = [];
-  for (const tr of rows) {
-    const cells = Array.from(tr.cells).map(td => td.textContent.trim());
-    let matchId = null;
-    const analysisBtn = tr.querySelector("a[onclick*=\"analysis(\"]");
-    if (analysisBtn) {
-      const m = analysisBtn.getAttribute("onclick").match(/analysis\((\d+)\)/);
-      if (m) matchId = m[1];
-    }
-    if (!matchId) {
-      const barDiv = tr.querySelector("div[id^=\"bar_\"]");
-      if (barDiv) {
-        const m = barDiv.id.match(/bar_(\d+)/);
-        if (m) matchId = m[1];
-      }
-    }
-    if (matchId) {
-      results.push({ id: tr.id, matchId, cells });
-    }
-  }
-  return results;
-})()'
+```bash
+cd scripts/sporttery-sniper
+npm run schedule -- --date {YYYY-MM-DD} --format openclaw-json
 ```
 
-**提取逻辑**（按优先级）：
+脚本输出必须是 JSON，且 `kind` 必须为 `openclaw.schedule`。若脚本失败、JSON 无法解析、`kind` 不匹配，或 `matches` 字段缺失，直接报告失败原因，结束流程，不写 memory。
 
-1. 找 `a[onclick*="analysis("]`，从 `onclick="analysis(2958853)"` 提取数字 → matchId
-2. 若无，找 `div[id^="bar_"]`，从 `id="bar_2958853"` 提取数字 → matchId
-3. 两者都找不到的行跳过（通常是 rowspan 的第二行，无 matchId 数据单元格）
+### 步骤 3：解析脚本输出
 
-如果 eval 返回空数据或报错，退化到 snapshot 模式：
+从 `openclaw.schedule` JSON 中读取：
 
-```
-agent-browser snapshot
-```
+| JSON 字段 | 写入 memory 字段 |
+| --- | --- |
+| `matches[].no` | 编号 |
+| `matches[].matchId` | 比赛ID |
+| `matches[].league` | 联赛 |
+| `matches[].leagueLevel` | 联赛层级 |
+| `matches[].kickoffTime` | 开球 |
+| `matches[].status` | 状态 |
+| `matches[].homeTeam` | 主队 |
+| `matches[].score` | 比分 |
+| `matches[].awayTeam` | 客队 |
+| `matches[].analysisUrl` | 分析页 |
 
-从 snapshot 文本中查找 `analysis(数字)` 模式提取比赛 ID，配合行文本解析队名和时间。
+同时读取 `summary.total/notStarted/inProgress/finished` 作为汇总计数。若脚本输出中某些字段为空，用「无数据」或 `-` 标记，不要臆造。
 
-### 步骤 4：过滤销售日期（关键！）
+### 步骤 4：格式化输出并写入 memory
 
-**目的**：只保留销售日期为今天的比赛，防止跨天比赛混入。
+按「结构化输出」和「写入每日记忆」章节格式生成赛程摘要，追加写入 `memory/{今天日期}.md`。
 
-**竞彩销售窗口规则**：
-
-- 销售日期不是自然日，而是 **今天 11:00 到 明天 11:00**
-- 例如：周一销售窗口 = 周一 11:00 到 周二 11:00
-- 页面显示的竞彩编号前缀（周一/周二）即代表销售日期
-
-**过滤规则**：
-
-1. 获取当前日期对应的 **星期前缀**（周一、周二、...、周日）
-2. 对每场比赛，从竞彩编号提取星期前缀
-3. **只保留星期前缀 = 今天星期前缀** 的比赛
-
----
-
-### 步骤 4.5：计算“开球时间”（修正跨日，关键！）
-
-**目的**：把列表中的 `HH:mm` 转成正确的绝对时间 `YYYY-MM-DD HH:mm`，避免“凌晨场次被记到今天”的 BUG。
-
-**背景**：竞彩销售日期窗口为 **今天 11:00 ～ 明天 11:00**。因此同一销售日（如“周二”）的比赛，可能出现在**次日凌晨**（00:00～10:59）。
-
-**规则（强制）**：
-
-- 先得到本次抓取的 **销售日期**（即“今天自然日”，写入 memory 文件名的日期，如 2026-03-17）。
-- 对每场比赛取页面表格中的 `HH:mm` 作为开球时刻：
-  - 若 `HH:mm < 11:00` → 该场开球日期 = **销售日期 + 1 天**（次日凌晨场）
-  - 否则 → 该场开球日期 = **销售日期**（当日白天/晚上场）
-
-**输出字段名统一**：后续所有结构化输出中，将「时间」字段统一改为「开球」。
-
-**实现方式**（在 eval 后添加过滤逻辑）：
-
-```javascript
-// 计算今天是星期几（1=周一，7=周日）
-const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-const todayWeekday = weekdays[new Date().getDay()];
-
-// 从 results 中提取竞彩编号（通常是第 1 列，格式 "周一 001" 或 "001"）
-const filteredResults = results.filter((r) => {
-  const numCell = r.cells[0] || ""; // 场号列，如 "周一 001"
-  // 检查编号是否包含今天的前缀
-  if (numCell.includes(todayWeekday)) return true;
-  // 如果没有前缀（仅数字），默认保留（可能是当天比赛）
-  if (/^\d+$/.test(numCell.trim())) return true;
-  return false;
-});
-```
-
-**备选方案**（如果编号列无前缀）：
-
-- 使用开球时间判断：保留开球时间在 **今天 11:00 到 明天 11:00** 之间的比赛
-
-**过滤后处理**：
-
-- 如果过滤后场次 = 0 → 按「当日无比赛」流程处理
-- 如果过滤后场次 < 原始场次 → 在输出中说明「过滤掉 N 场非今日销售比赛」
-
----
+脚本输出中已按销售日过滤；若命令指定 `--date`，以该日期作为销售日。若 `matches.length = 0`，执行「当日无比赛」流程。
 
 ### 步骤 5：结构化输出
 
@@ -220,15 +133,15 @@ const filteredResults = results.filter((r) => {
 
 如果需要查看非当天的赛程（如龙王说「看看昨天的比赛」，或复盘需要查历史赛程）：
 
-1. 打开赛程页后，找到日期选择器/日期切换按钮
-2. 切换到目标日期
-3. 等待页面重新渲染后，按步骤 3～5 正常提取（**步骤 4 过滤逻辑仍会执行，但基于目标日期判断**；步骤 6 写入记忆视需要写入目标日或跳过）
+1. 运行脚本：`cd scripts/sporttery-sniper && npm run schedule -- --date {目标日期} --format openclaw-json`
+2. 解析 `openclaw.schedule` JSON 并按步骤 3～4 输出。
 
 ## 异常处理
 
-- 页面加载超时：等待 5 秒后重试，最多重试 2 次
-- 表格为空：可能是页面结构变化，用 snapshot 检查页面当前状态并报告
-- 部分数据缺失：正常记录已有数据，缺失字段标记为「无数据」
+- 脚本目录不存在：报告 `scripts/sporttery-sniper` 不存在，结束流程。
+- 脚本执行失败：记录错误信息，重试 1 次；仍失败则结束流程，不写 memory。
+- JSON 解析失败或 `kind` 不匹配：记录原始错误，结束流程，不写 memory。
+- 部分数据缺失：正常记录已有数据，缺失字段标记为「无数据」。
 - **当日无比赛**：如果抓取结果为 0 场比赛：
   1. 告知龙王「今日无竞彩足球赛事」
   2. 执行 recommendation（输入 0 场），按其标准结构写入当日 `## 推荐`（内容为「今日无竞彩赛事，无推荐」，但必须包含 ### 精选场次/候补场次/串关组合/CLV 追踪数据 这些块，表可为空），确保 post-review 解析一致

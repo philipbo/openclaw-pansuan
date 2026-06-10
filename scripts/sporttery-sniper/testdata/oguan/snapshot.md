@@ -1,0 +1,243 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3] [cursor=pointer]: 简
+    - generic [ref=e4] [cursor=pointer]: 繁
+  - generic [ref=e6]:
+    - link "新球体育" [ref=e7] [cursor=pointer]:
+      - /url: //www.titan007.com
+      - img "新球体育" [ref=e8]
+    - list [ref=e9]:
+      - listitem [ref=e10]:
+        - link "首页" [ref=e11] [cursor=pointer]:
+          - /url: //www.titan007.com/
+      - listitem [ref=e12]:
+        - link "足球" [ref=e13] [cursor=pointer]:
+          - /url: //live.titan007.com/
+      - listitem [ref=e14]:
+        - link "篮球" [ref=e15] [cursor=pointer]:
+          - /url: //lq3.titan007.com/nba.htm
+      - listitem [ref=e16]:
+        - link "球吧" [ref=e17] [cursor=pointer]:
+          - /url: //qiuba.titan007.com/
+      - listitem [ref=e18]:
+        - link "分析师" [ref=e19] [cursor=pointer]:
+          - /url: //v.titan007.com/
+      - listitem [ref=e20]:
+        - generic [ref=e21]: 新
+        - link "V计划" [ref=e22] [cursor=pointer]:
+          - /url: "//v.titan007.com?t=vjh "
+      - listitem [ref=e23]:
+        - link "资讯" [ref=e24] [cursor=pointer]:
+          - /url: //www.titan007.com/articles
+      - listitem [ref=e25]:
+        - link "V猜球" [ref=e26] [cursor=pointer]:
+          - /url: //guess2.titan007.com/
+      - listitem [ref=e28]:
+        - generic [ref=e29]: 新
+        - link "AI预测" [ref=e30] [cursor=pointer]:
+          - /url: //aiplus.titan007.com/?from=0
+      - listitem [ref=e31]:
+        - generic [ref=e32]: 热
+        - link "世界杯" [ref=e33] [cursor=pointer]:
+          - /url: //2026.titan007.com
+      - listitem [ref=e34]:
+        - link "资料库" [ref=e35] [cursor=pointer]:
+          - /url: //zq.titan007.com/info/index_cn.htm
+      - listitem [ref=e37]:
+        - link "更多" [ref=e38] [cursor=pointer]:
+          - /url: ""
+    - generic [ref=e40]:
+      - generic [ref=e42] [cursor=pointer]: 登录/注册
+      - generic [ref=e43] [cursor=pointer]: 下载APP
+  - generic [ref=e44]:
+    - generic:
+      - generic [ref=e45]: 专业体育数据
+      - list [ref=e46]:
+        - listitem [ref=e47]
+        - listitem [ref=e51]
+        - listitem [ref=e58]
+  - generic [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e64]: 赛事选择
+      - generic [ref=e65]:
+        - generic [ref=e66] [cursor=pointer]: 洲际赛事
+        - generic [ref=e67] [cursor=pointer]: 欧洲赛事
+        - generic [ref=e68] [cursor=pointer]: 欧洲赛事
+        - list [ref=e70]
+        - generic [ref=e165] [cursor=pointer]: 英格兰
+        - generic [ref=e166] [cursor=pointer]: 意大利
+        - generic [ref=e167] [cursor=pointer]: 西班牙
+        - generic [ref=e168] [cursor=pointer]: 德国
+        - generic [ref=e169] [cursor=pointer]: 法国
+        - generic [ref=e170] [cursor=pointer]: 葡萄牙
+        - generic [ref=e171] [cursor=pointer]: 苏格兰
+        - generic [ref=e172] [cursor=pointer]: 荷兰
+        - generic [ref=e173] [cursor=pointer]: 比利时
+        - generic [ref=e174] [cursor=pointer]: 瑞典
+        - generic [ref=e175] [cursor=pointer]: 芬兰
+        - generic [ref=e176] [cursor=pointer]: 挪威
+        - generic [ref=e177] [cursor=pointer]: 丹麦
+        - generic [ref=e178] [cursor=pointer]: 奥地利
+        - generic [ref=e179] [cursor=pointer]: 瑞士
+        - generic [ref=e180] [cursor=pointer]: 爱尔兰
+        - generic [ref=e181] [cursor=pointer]: 北爱尔兰
+        - generic [ref=e182] [cursor=pointer]: 俄罗斯
+        - generic [ref=e183] [cursor=pointer]: 波兰
+        - generic [ref=e184] [cursor=pointer]: 乌克兰
+        - generic [ref=e185] [cursor=pointer]: 捷克
+        - generic [ref=e186] [cursor=pointer]: 希腊
+        - generic [ref=e187] [cursor=pointer]: 罗马尼亚
+        - generic [ref=e188] [cursor=pointer]: 斯洛伐克
+        - generic [ref=e189] [cursor=pointer]: 冰岛
+        - generic [ref=e190] [cursor=pointer]: 拉脱维亚
+        - generic [ref=e191] [cursor=pointer]: 以色列
+        - generic [ref=e192] [cursor=pointer]: 白俄罗斯
+        - generic [ref=e193] [cursor=pointer]: 立陶宛
+        - generic [ref=e194] [cursor=pointer]: 土耳其
+        - generic [ref=e195] [cursor=pointer]: 威尔士
+        - generic [ref=e196] [cursor=pointer]: 匈牙利
+        - generic [ref=e197] [cursor=pointer]: 克罗地亚
+        - generic [ref=e198] [cursor=pointer]: 保加利亚
+        - generic [ref=e199] [cursor=pointer]: 斯洛文尼亚
+        - generic [ref=e200] [cursor=pointer]: 塞浦路斯
+        - generic [ref=e201] [cursor=pointer]: 塞尔维亚
+        - generic [ref=e202] [cursor=pointer]: 阿尔巴尼亚
+        - generic [ref=e203] [cursor=pointer]: 哈萨克斯坦
+        - generic [ref=e204] [cursor=pointer]: 波黑
+        - generic [ref=e205] [cursor=pointer]: 爱沙尼亚
+        - generic [ref=e206] [cursor=pointer]: 摩尔多瓦
+        - generic [ref=e207] [cursor=pointer]: 阿美尼亚
+        - generic [ref=e208] [cursor=pointer]: 黑山
+        - generic [ref=e209] [cursor=pointer]: 马耳他
+        - generic [ref=e210] [cursor=pointer]: 卢森堡
+        - generic [ref=e211] [cursor=pointer]: 法罗群岛
+        - generic [ref=e212] [cursor=pointer]: 格鲁吉亚
+        - generic [ref=e213] [cursor=pointer]: 阿塞拜疆
+        - generic [ref=e214] [cursor=pointer]: 北马其顿
+        - generic [ref=e215] [cursor=pointer]: 圣马力诺
+        - generic [ref=e216] [cursor=pointer]: 安道尔
+        - generic [ref=e217] [cursor=pointer]: 科索沃
+        - generic [ref=e218] [cursor=pointer]: 美洲赛事
+        - generic [ref=e219] [cursor=pointer]: 亚洲赛事
+        - generic [ref=e220] [cursor=pointer]: 大洋洲赛事
+        - generic [ref=e221] [cursor=pointer]: 非洲赛事
+      - generic [ref=e222]:
+        - generic [ref=e224] [cursor=pointer]: 球队
+        - generic [ref=e226] [cursor=pointer]: 球员
+        - textbox "请输入搜索内容" [ref=e227]
+        - generic [ref=e228] [cursor=pointer]: 搜 索
+    - generic [ref=e316]:
+      - generic [ref=e317]:
+        - generic [ref=e318]
+        - combobox [ref=e323]
+      - generic [ref=e324]:
+        - link "赛程积分" [ref=e325] [cursor=pointer]:
+          - /url: /cn/CupMatch/2023-2024/103.html
+        - link "亚让" [ref=e327] [cursor=pointer]:
+          - /url: /cn/CletGoal/2023-2024/103.html
+        - link "大小盘路" [ref=e328] [cursor=pointer]:
+          - /url: /cn/CBigSmall/2023-2024/103.html
+        - link "球员数据" [ref=e329] [cursor=pointer]:
+          - /url: /cn/TechList/2023-2024/103.html
+        - link "常见赛果" [ref=e330] [cursor=pointer]:
+          - /url: /cn/CNormal/2023-2024/103.html
+        - link "入球总数/单双" [ref=e331] [cursor=pointer]:
+          - /url: /cn/CSinDou/2023-2024/103.html
+        - link "半全场胜负" [ref=e332] [cursor=pointer]:
+          - /url: /cn/CAllHalf/2023-2024/103.html
+        - link "上下半场入球" [ref=e333] [cursor=pointer]:
+          - /url: /cn/CMoreBall/2023-2024/103.html
+      - generic [ref=e334]:
+        - list [ref=e336]
+        - generic [ref=e348]: 决赛 统计 胜平负：0胜0平1负 让球：0赢0走1输, 让胜率0% 进球数：0大0走1小, 大球率0%
+        - table [ref=e350]
+        - generic [ref=e393]
+        - generic [ref=e397]: 页面最后更新时间:2026-03-18 08:30:59
+  - generic [ref=e232]:
+    - generic [ref=e233]:
+      - img [ref=e234]
+      - generic [ref=e235]: 直播版权合作
+      - img [ref=e236]
+    - generic [ref=e238]:
+      - img [ref=e239]
+      - img [ref=e240]
+      - img [ref=e241]
+      - img [ref=e242]
+      - img [ref=e243]
+      - img [ref=e244]
+      - img [ref=e245]
+      - img [ref=e246]
+      - img [ref=e247]
+      - img [ref=e248]
+      - img [ref=e249]
+      - img [ref=e250]
+      - img [ref=e251]
+      - img [ref=e252]
+      - img [ref=e253]
+      - img [ref=e254]
+      - img [ref=e255]
+      - img [ref=e256]
+    - generic [ref=e257]:
+      - link "足球比分" [ref=e259] [cursor=pointer]:
+        - /url: //live.titan007.com/
+      - link "篮球比分" [ref=e261] [cursor=pointer]:
+        - /url: //lq3.titan007.com/nba.htm
+      - link "足球资料库" [ref=e263] [cursor=pointer]:
+        - /url: //zq.titan007.com/info/index_cn.htm
+      - link "足球" [ref=e265] [cursor=pointer]:
+        - /url: //guess2.titan007.com/
+      - link "篮球" [ref=e267] [cursor=pointer]:
+        - /url: //guess2.titan007.com/basket/
+      - link "比分应用" [ref=e269] [cursor=pointer]:
+        - /url: //www.titan007.com/app/
+      - link "体育标签" [ref=e271] [cursor=pointer]:
+        - /url: //www.titan007.com/tag/
+    - generic [ref=e272]:
+      - generic [ref=e273]:
+        - link "关于本站" [ref=e275] [cursor=pointer]:
+          - /url: //www.titan007.com/about/about.html
+        - link "隐私政策" [ref=e277] [cursor=pointer]:
+          - /url: //www.titan007.com/about/about.html#private
+        - link "数据服务" [ref=e279] [cursor=pointer]:
+          - /url: https://www.feijing88.com/
+        - link "用户守则" [ref=e281] [cursor=pointer]:
+          - /url: //www.titan007.com/about/about.html#userRule
+        - link "联系我们" [ref=e283] [cursor=pointer]:
+          - /url: //www.titan007.com/about/about.html#lank
+        - link "网站地图" [ref=e285] [cursor=pointer]:
+          - /url: //www.titan007.com/map.htm
+        - generic [ref=e286]: Copyright © 2002-2026 华盈体育版权所有
+      - generic [ref=e287]:
+        - generic [ref=e288]
+        - link "粤ICP备09088851号" [ref=e292] [cursor=pointer]:
+          - /url: //beian.miit.gov.cn/
+        - link "粤公网安备 44120202000012号" [ref=e294] [cursor=pointer]:
+          - /url: //www.beian.gov.cn/portal/registerSystemInfo?recordcode=44120202000012
+        - link "营业执照" [ref=e296] [cursor=pointer]:
+          - /url: //www.titan007.com/images/bl.jpg
+        - link "广播电视节目制作经营许可证" [ref=e298] [cursor=pointer]:
+          - /url: //www.titan007.com/images/tvl.jpg
+        - generic [ref=e299]: 粤网文（2024）3464-247号
+    - generic [ref=e300]: 声明：本网资讯仅供体育爱好者浏览、购买中国足彩参考之用。任何人不得用于非法用途，否则责任自负。本网所登载广告均为广告客户的个人意见及表达方式，和本网无任何关系。链接的广告仅限于体育或中国足彩推荐信息、不得含有色情、政治或博彩信息，如有违反国家法律规定的，本网有权随时予以删除，并保留与有关部门合作追究的权利。
+    - generic [ref=e301]:
+      - link [ref=e302] [cursor=pointer]:
+        - /url: //pic.titan007.com/Files/News/GetPic/0e463fc4-4c0a-4cdc-9a68-bc766ad8ffe0.jpg
+        - img [ref=e303]
+      - link [ref=e304] [cursor=pointer]:
+        - /url: "#"
+        - img [ref=e305]
+      - link [ref=e306] [cursor=pointer]:
+        - /url: //www.beian.gov.cn/portal/index
+        - img [ref=e307]
+      - link [ref=e308] [cursor=pointer]:
+        - /url: //www.beian.gov.cn/portal/index
+        - img [ref=e309]
+      - link [ref=e310] [cursor=pointer]:
+        - /url: https://v.yunaq.com/certificate?domain=zq.titan007.com&from=label&code=90030
+        - img [ref=e311]
+      - link [ref=e312] [cursor=pointer]:
+        - /url: //si.trustutn.org/info?sn=236250224040953117354&certType=1
+        - img [ref=e313]
+      - link [ref=e314] [cursor=pointer]:
+        - /url: //www.12377.cn/
+        - img [ref=e315]
