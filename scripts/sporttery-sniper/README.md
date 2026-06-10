@@ -55,11 +55,21 @@ npm run analyze -- 2990354
 npm run analyze -- https://zq.titan007.com/analysis/2990354cn.htm
 ```
 
+赛后复盘同一场比赛，重新抓取最新赛果、末盘前赔率变化、竞足和 Crown 全指数：
+
+```bash
+npm run review -- 2990354
+npm run review -- https://zq.titan007.com/analysis/2990354cn.htm
+```
+
+复盘命令会输出一段可直接交给 Codex 的 Markdown 上下文；如果比赛已结束，会展示状态、全场比分和半场比分，用于判断赛前分析是否兑现、亚让/大小球/欧赔信号是否与结果一致，以及后续模型应如何修正。
+
 给 OpenClaw agent 使用时，输出结构化 JSON：
 
 ```bash
 npm run analyze -- 2990354 --format openclaw-json
 npm run analyze -- 2990354 --history-window 15 --format openclaw-json
+npm run review -- 2990354 --format openclaw-json
 ```
 
 可用 `--history-window`（或 `-w`）控制变化历史输出范围：
@@ -67,6 +77,7 @@ npm run analyze -- 2990354 --history-window 15 --format openclaw-json
 ```bash
 npm run analyze -- 2990354 --history-window 15
 npm run analyze -- 2990354 -w all
+npm run review -- 2990354 --history-window 15
 ```
 
 可选值：`all`（默认），或任意正整数小时数（如 `3`、`15`）。按小时截取时，会额外保留最早一条初盘参考。

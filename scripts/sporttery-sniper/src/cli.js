@@ -6,6 +6,7 @@ import {
   buildJcScheduleContext,
   buildOpenClawAnalysisPayload,
   buildOpenClawSchedulePayload,
+  buildReviewContext,
   fetchMatchData,
   fetchJcSchedule,
   parseHistoryWindow,
@@ -38,6 +39,31 @@ async function main() {
   }
 
   const data = await fetchMatchData(input);
+  if (command === "review") {
+    if (format === "openclaw-json") {
+      console.log(
+        JSON.stringify(
+          {
+            ...buildOpenClawAnalysisPayload(data, { historyWindow }),
+            kind: "openclaw.review",
+            context: buildReviewContext({ ...data, historyWindow }),
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    const context = buildReviewContext({ ...data, historyWindow });
+    console.log(context);
+    console.log("");
+    console.log("---");
+    console.log(
+      `已抓取比赛 ID：${parseMatchId(input)} 的最新复盘数据，变化历史窗口：${formatHistoryWindow(historyWindow)}。你可以把以上内容作为本次 Codex 复盘上下文。`,
+    );
+    return;
+  }
+
   if (format === "openclaw-json") {
     console.log(
       JSON.stringify(
@@ -79,6 +105,10 @@ export function parseCliArgs(argv) {
     if (arg === "schedule" || arg === "sync-schedule") {
       command = "schedule";
       input = "schedule";
+      continue;
+    }
+    if (arg === "review") {
+      command = "review";
       continue;
     }
     if (arg === "--date" || arg === "-d") {
@@ -137,6 +167,7 @@ function formatHistoryWindow(historyWindow) {
 function printHelp() {
   console.log(`用法：
   npm run analyze -- <比赛ID或titan007链接> [--history-window <窗口>]
+  npm run review -- <比赛ID或titan007链接> [--history-window <窗口>]
   npm run schedule [-- <YYYY-MM-DD>]
 
 参数：
@@ -146,6 +177,7 @@ function printHelp() {
 
 示例：
   npm run analyze -- 2990354
+  npm run review -- 2990354
   npm run analyze -- 2990354 --format openclaw-json
   npm run analyze -- 2990354 --history-window 15
   npm run analyze -- https://zq.titan007.com/analysis/2990354cn.htm -w 5

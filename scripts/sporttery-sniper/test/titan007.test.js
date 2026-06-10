@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildAnalysisContext,
+  buildReviewContext,
   buildJcScheduleContext,
   buildOpenClawAnalysisPayload,
   buildOpenClawSchedulePayload,
@@ -10,6 +11,7 @@ import {
   buildRequestHeaders,
   createHumanLikeFetch,
   parseAnalysisHtml,
+  parseLineupInjuries,
   parseDetailHtml,
   parseHeadToHeadRecords,
   parseLeagueStandings,
@@ -44,12 +46,41 @@ const DETAIL_HTML = `
   <div class="row"><label>场地：<a class='place'>茨城县鹿岛球场</a></label><label>天气：间中有云</label><label>温度：24℃～25℃</label></div>
   <div class="homeN"><a>鹿岛鹿角</a> 4-4-2<a class='coach' title='鬼木达'>(主教练: 鬼木达)</a></div>
   <div class="guestN"><a class='coach' title='斯基贝'>(主教练: 斯基贝)</a><a>神户胜利船</a> 4-1-2-3</div>
+  <div class="backupPlay hurtPlay">
+    <div class="home">
+      <div class='play'><div class='name'><i>4</i><a href='//info.titan007.com/cn/team/player/196/172821.html' target='_blank' title='荒木辽太郎'>荒木辽太郎</a></div><div class='eventicon'>膝关节损伤</div></div>
+      <div class='play'><div class='name'><a href='//info.titan007.com/cn/team/player/196/172822.html' target='_blank' title='铃木优磨'>铃木优磨</a></div><div class='eventicon'>停赛</div></div>
+    </div>
+    <div class="bu_txt"><span class="center">伤停</span></div>
+    <div class="guest">
+      <div class='nodata'>暂无数据</div>
+    </div>
+  </div>
   <table id="techCountAll">
     <tr><td colspan="5" class="title">技统数据</td></tr>
     <tr><th>近3场</th><th>近10场</th><th>&nbsp;</th><th>近3场</th><th>近10场</th></tr>
     <tr><td>1</td><td>1.3</td><td class='graybg b'>进球</td><td><span class="red">2.7</span></td><td><span class="red">1.4</span></td></tr>
     <tr><td><span class="red">57.7%</span></td><td><span class="red">58.1%</span></td><td class='graybg b'>控球率</td><td>47.7%</td><td>53.5%</td></tr>
   </table>
+</body>
+</html>`;
+
+const FINISHED_DETAIL_HTML = `
+<html>
+<head>
+  <title>匈牙利 VS 哈萨克斯坦(2026赛季国际友谊)-现场分析-新球体育-球探体育</title>
+  <script>
+    var scheduleID = 2992890;
+    var state = -1;
+    var strTime = '2026-06-10 01:00';
+    var homeTeamName = '匈牙利';
+    var guestTeamName = '哈萨克斯坦';
+    var eventDetailData = "2^0^0^0^0^0^2^0^0^0^^^^^^^^^上半场结束！比分：0-1^^^^!3^0^0^0^0^0^-1^0^0^0^^^^^^^^^比赛结束！ 比分：3-1^^^^";
+  </script>
+</head>
+<body>
+  <a class="LName">国际友谊</a>
+  <span class="time">2026-06-10 01:00</span>
 </body>
 </html>`;
 
@@ -416,6 +447,20 @@ test("解析详情页基础比赛信息和技统数据", () => {
     homeLast10: "1.3",
     awayLast3: "2.7",
     awayLast10: "1.4",
+  });
+});
+
+test("解析已完场详情页的比赛状态和赛果", () => {
+  const detail = parseDetailHtml(FINISHED_DETAIL_HTML);
+
+  assert.equal(detail.basic.status, "完");
+  assert.deepEqual(detail.basic.score, {
+    home: "3",
+    away: "1",
+    halfHome: "0",
+    halfAway: "1",
+    display: "3-1",
+    halfDisplay: "0-1",
   });
 });
 
@@ -797,6 +842,27 @@ test("解析竞足胜平负、让胜平负、总进球和比分赔率", () => {
   });
 });
 
+test("解析预计阵容里的伤停信息，不包含球员上一场评分", () => {
+  assert.deepEqual(parseLineupInjuries(DETAIL_HTML), {
+    home: [
+      {
+        number: "4",
+        player: "荒木辽太郎",
+        reason: "膝关节损伤",
+        url: "//info.titan007.com/cn/team/player/196/172821.html",
+      },
+      {
+        number: "",
+        player: "铃木优磨",
+        reason: "停赛",
+        url: "//info.titan007.com/cn/team/player/196/172822.html",
+      },
+    ],
+    away: [],
+  });
+  assert.equal(JSON.stringify(parseLineupInjuries(DETAIL_HTML)).includes("rating"), false);
+});
+
 test("解析分析页联赛积分排名，只保留全场数据", () => {
   const standings = parseLeagueStandings(ANALYSIS_HTML);
 
@@ -934,6 +1000,9 @@ test("生成可交给 Codex 的分析上下文", () => {
   assert.match(context, /## 技术统计/);
   assert.match(context, /## 联赛积分排名/);
   assert.match(context, /## 对赛往绩/);
+  assert.match(context, /## 阵容伤病情况/);
+  assert.match(context, /荒木辽太郎/);
+  assert.match(context, /膝关节损伤/);
   assert.match(context, /26-05-31/);
   assert.doesNotMatch(context, /## 技统数据/);
   assert.match(context, /# 角色设定/);
@@ -953,6 +1022,59 @@ test("生成可交给 Codex 的分析上下文", () => {
   assert.match(context, /比分\/波胆/);
   assert.match(context, /Crown全指数/);
   assert.doesNotMatch(context, /半全场：主\/主/);
+});
+
+test("生成可交给 Codex 的复盘上下文", () => {
+  const context = buildReviewContext({
+    detail: {
+      ...parseDetailHtml(DETAIL_HTML),
+      ...parseAnalysisHtml(ANALYSIS_HTML),
+    },
+    liveDetailUrl: "https://live.titan007.com/detail/2990354cn.htm",
+    markets: {
+      asianCompanies: parseOddsCompanyList(ASIAN_LIST_HTML, "asian"),
+      overUnderCompanies: parseOddsCompanyList(
+        OVER_UNDER_LIST_HTML,
+        "overUnder",
+      ),
+      asianMacauHistory: parseOddsChangeHistory(
+        CHANGE_HISTORY_HTML,
+        "asian",
+        "1",
+      ),
+      europeCompanies: parseEuropeOddsScript(EUROPE_SCRIPT).companies,
+      europeHistories: parseEuropeOddsScript(EUROPE_SCRIPT).histories,
+      jcOdds: parseJcOddsData(JC_ODDS_JSON),
+      crowFullIndex: parseCrowFullIndexData(CROW_FULL_INDEX_HTML),
+    },
+    sourceUrl: "https://zq.titan007.com/analysis/2990354cn.htm",
+    historyWindow: 15,
+  });
+
+  assert.match(context, /# 足球赔率复盘任务/);
+  assert.match(context, /复盘是否与赛前分析一致/);
+  assert.match(context, /最新赛果与赔率数据/);
+  assert.match(context, /判断偏差来源/);
+  assert.match(context, /输出范围：开赛前 15 小时内全部变化记录/);
+  assert.match(context, /鹿岛鹿角 VS 神户胜利船/);
+  assert.match(context, /亚让公司列表/);
+  assert.match(context, /欧赔公司列表/);
+});
+
+test("复盘上下文展示已完场的全场比分和半场比分", () => {
+  const context = buildReviewContext({
+    detail: {
+      ...parseDetailHtml(FINISHED_DETAIL_HTML),
+      ...parseAnalysisHtml(ANALYSIS_HTML),
+    },
+    markets: {},
+    sourceUrl: "https://zq.titan007.com/analysis/2992890cn.htm",
+    liveDetailUrl: "https://live.titan007.com/detail/2992890cn.htm",
+  });
+
+  assert.match(context, /状态：完/);
+  assert.match(context, /全场比分：3-1/);
+  assert.match(context, /半场比分：0-1/);
 });
 
 test("生成 OpenClaw 单场分析结构化数据", () => {
@@ -1019,4 +1141,12 @@ test("生成 OpenClaw 单场分析结构化数据", () => {
   assert.equal(payload.markets.europeCompanies[0].company, "威廉");
   assert.equal(payload.markets.jcOdds.winDrawLose.current.win, "1.95");
   assert.equal(payload.markets.crowFullIndex.correctScores.homeWin[0].score, "1:0");
+  assert.deepEqual(payload.lineupInjuries.home[0], {
+    number: "4",
+    player: "荒木辽太郎",
+    reason: "膝关节损伤",
+    url: "//info.titan007.com/cn/team/player/196/172821.html",
+  });
+  assert.equal(payload.correctScoreOdds.crownFullIndex.homeWin[0].score, "1:0");
+  assert.equal(payload.correctScoreOdds.jc.homeWin[0].score, "1-0");
 });

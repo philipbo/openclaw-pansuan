@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "analyze": "node src/cli.js",
+    "review": "node src/cli.js review",
     "schedule": "node src/cli.js schedule",
     "sync-schedule": "node src/cli.js schedule"
   },

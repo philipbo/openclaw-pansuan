@@ -379,6 +379,8 @@ export function parseDetailHtml(html) {
   const kickoffTime =
     pickScriptVar(html, "strTime") ||
     textOfFirst(html, /<span[^>]*class=["']time["'][^>]*>([\s\S]*?)<\/span>/i);
+  const state = pickScriptVar(html, "state");
+  const score = parseMatchScoreFromDetail(html);
   const league = textOfFirst(
     html,
     /<a[^>]*class=["']LName["'][^>]*>([\s\S]*?)<\/a>/i,
@@ -403,27 +405,33 @@ export function parseDetailHtml(html) {
     /<div[^>]*class=["']guestN["'][^>]*>([\s\S]*?)<\/div>/i,
   );
 
+  const basic = {
+    matchId: scheduleID,
+    league,
+    kickoffTime,
+    homeTeam,
+    awayTeam,
+    venue,
+    weather,
+    temperature,
+    homeFormation: extractFormation(homeBlock),
+    awayFormation: extractFormation(awayBlock),
+    homeCoach: attrOfFirst(
+      homeBlock,
+      /class=['"]coach['"][^>]*title=['"]([^'"]+)['"]/i,
+    ),
+    awayCoach: attrOfFirst(
+      awayBlock,
+      /class=['"]coach['"][^>]*title=['"]([^'"]+)['"]/i,
+    ),
+  };
+  const status = matchStatusName(state);
+  if (status) basic.status = status;
+  if (score) basic.score = score;
+
   return {
-    basic: {
-      matchId: scheduleID,
-      league,
-      kickoffTime,
-      homeTeam,
-      awayTeam,
-      venue,
-      weather,
-      temperature,
-      homeFormation: extractFormation(homeBlock),
-      awayFormation: extractFormation(awayBlock),
-      homeCoach: attrOfFirst(
-        homeBlock,
-        /class=['"]coach['"][^>]*title=['"]([^'"]+)['"]/i,
-      ),
-      awayCoach: attrOfFirst(
-        awayBlock,
-        /class=['"]coach['"][^>]*title=['"]([^'"]+)['"]/i,
-      ),
-    },
+    basic,
+    lineupInjuries: parseLineupInjuries(html),
     teamStats: parseTeamStats(html, "techCountAll"),
     sameHomeAwayStats: parseTeamStats(html, "techCountSame"),
   };
@@ -433,6 +441,43 @@ export function parseAnalysisHtml(html) {
   return {
     leagueStandings: parseLeagueStandings(html),
     headToHead: parseHeadToHeadRecords(html, 3),
+  };
+}
+
+export function parseLineupInjuries(html) {
+  const source = String(html || "");
+  const hurtIndex = source.search(
+    /<div\b[^>]*class=["'][^"']*\bhurtPlay\b[^"']*["'][^>]*>/i,
+  );
+  if (hurtIndex < 0) return { home: [], away: [] };
+
+  const tail = source.slice(hurtIndex);
+  const endIndex = findFirstPositiveIndex([
+    tail.search(/<div\b[^>]*id=["']icons["']/i),
+    tail.search(/<table\b[^>]*id=["']techCountAll["']/i),
+  ]);
+  const block = endIndex >= 0 ? tail.slice(0, endIndex) : tail;
+  const homeStart = block.search(/<div\b[^>]*class=["']home["'][^>]*>/i);
+  const middleStart = block.search(/<div\b[^>]*class=["']bu_txt["'][^>]*>/i);
+  const guestStart =
+    middleStart >= 0
+      ? block
+          .slice(middleStart)
+          .search(/<div\b[^>]*class=["']guest["'][^>]*>/i)
+      : -1;
+
+  const homeBlock =
+    homeStart >= 0 && middleStart > homeStart
+      ? block.slice(homeStart, middleStart)
+      : "";
+  const guestBlock =
+    middleStart >= 0 && guestStart >= 0
+      ? block.slice(middleStart + guestStart)
+      : "";
+
+  return {
+    home: parseInjuryPlayers(homeBlock),
+    away: parseInjuryPlayers(guestBlock),
   };
 }
 
@@ -874,7 +919,9 @@ export function buildOpenClawAnalysisPayload(data, options = {}) {
       liveDetailUrl: data?.liveDetailUrl ?? buildDetailUrl(basic.matchId),
     },
     detail: data?.detail ?? {},
+    lineupInjuries: data?.detail?.lineupInjuries ?? { home: [], away: [] },
     markets: data?.markets ?? {},
+    correctScoreOdds: buildCorrectScoreOdds(data?.markets ?? {}),
     context: buildAnalysisContext({
       detail: data?.detail ?? {},
       markets: data?.markets ?? {},
@@ -882,6 +929,21 @@ export function buildOpenClawAnalysisPayload(data, options = {}) {
       liveDetailUrl: data?.liveDetailUrl,
       historyWindow: options.historyWindow ?? "all",
     }),
+  };
+}
+
+function buildCorrectScoreOdds(markets = {}) {
+  return {
+    crownFullIndex: markets.crowFullIndex?.correctScores ?? {
+      homeWin: [],
+      draw: [],
+      awayWin: [],
+    },
+    jc: markets.jcOdds?.correctScores ?? {
+      homeWin: [],
+      draw: [],
+      awayWin: [],
+    },
   };
 }
 
@@ -1106,6 +1168,55 @@ function tableRows(table) {
     .filter((cells) => cells.length);
 }
 
+function parseInjuryPlayers(block) {
+  return [
+    ...String(block || "").matchAll(
+      /<div\b[^>]*class=["']play["'][^>]*>[\s\S]*?<div\b[^>]*class=["']name["'][^>]*>([\s\S]*?)<\/div>[\s\S]*?<div\b[^>]*class=["']eventicon["'][^>]*>([\s\S]*?)<\/div>/gi,
+    ),
+  ]
+    .map((match) => {
+      const nameHtml = match[1] ?? "";
+      return {
+        number: textOfFirst(nameHtml, /<i\b[^>]*>([\s\S]*?)<\/i>/i),
+        player:
+          attrOfFirst(nameHtml, /<a\b[^>]*title=["']([^"']+)["']/i) ||
+          textOfFirst(nameHtml, /<a\b[^>]*>([\s\S]*?)<\/a>/i),
+        reason: cleanText(match[2]),
+        url: attrOfFirst(nameHtml, /<a\b[^>]*href=["']([^"']+)["']/i),
+      };
+    })
+    .filter((item) => item.player || item.reason);
+}
+
+function findFirstPositiveIndex(indexes) {
+  const positive = indexes.filter((index) => index >= 0);
+  return positive.length ? Math.min(...positive) : -1;
+}
+
+function appendLineupInjuries(lines, injuries, basic = {}) {
+  lines.push("## 阵容伤病情况");
+  const home = injuries?.home ?? [];
+  const away = injuries?.away ?? [];
+  if (!home.length && !away.length) {
+    lines.push("- 未抓取到。");
+    lines.push("");
+    return;
+  }
+  lines.push("| 球队 | 号码 | 球员 | 情况 |");
+  lines.push("| --- | ---: | --- | --- |");
+  for (const item of home) {
+    lines.push(
+      `| ${basic.homeTeam || "主队"} | ${item.number || "-"} | ${item.player || "-"} | ${item.reason || "-"} |`,
+    );
+  }
+  for (const item of away) {
+    lines.push(
+      `| ${basic.awayTeam || "客队"} | ${item.number || "-"} | ${item.player || "-"} | ${item.reason || "-"} |`,
+    );
+  }
+  lines.push("");
+}
+
 export function buildAnalysisContext({
   detail,
   markets = {},
@@ -1192,6 +1303,9 @@ export function buildAnalysisContext({
   lines.push(`- ${basic.homeTeam} VS ${basic.awayTeam}`);
   lines.push(`- 赛事：${basic.league || "未知"}`);
   lines.push(`- 时间：${basic.kickoffTime || "未知"}`);
+  lines.push(`- 状态：${basic.status || "未知"}`);
+  lines.push(`- 全场比分：${basic.score?.display || "未知"}`);
+  lines.push(`- 半场比分：${basic.score?.halfDisplay || "未知"}`);
   lines.push(`- 场地：${basic.venue || "未知"}`);
   lines.push(
     `- 天气/温度：${basic.weather || "未知"}，${basic.temperature || "未知"}`,
@@ -1203,6 +1317,7 @@ export function buildAnalysisContext({
     `- 主教练：${basic.homeCoach || "未知"} / ${basic.awayCoach || "未知"}`,
   );
   lines.push("");
+  appendLineupInjuries(lines, detail.lineupInjuries, basic);
   appendStats(lines, "## 技术统计", teamStats, "全部场次");
   appendStats(lines, "", sameHomeAwayStats, "同主客");
   appendLeagueStandings(lines, leagueStandings);
@@ -1288,6 +1403,161 @@ export function buildAnalysisContext({
     "5. 标注数据缺口和不确定性，尤其说明缺失公司历史记录对盘口判断的影响。",
   );
   lines.push("6. 不要把预测写成确定结果，推荐应服务于提高长期预测正确率。");
+  return lines.join("\n");
+}
+
+export function buildReviewContext({
+  detail,
+  markets = {},
+  sourceUrl,
+  liveDetailUrl,
+  historyWindow = "all",
+}) {
+  const {
+    basic,
+    teamStats,
+    sameHomeAwayStats,
+    leagueStandings = [],
+    headToHead = [],
+  } = detail;
+  const lines = [];
+  lines.push("# 角色设定");
+  lines.push("");
+  lines.push(
+    "你是一位资深足球复盘分析师，擅长用赛后最新数据、赛前末盘和多公司赔率变化，复盘赛前判断是否与真实走势一致。",
+  );
+  lines.push("");
+  lines.push(
+    "你的核心目标是校准长期预测模型：判断原分析中的强信号是否兑现，识别误判来源，并给出后续修正建议。不要把单场结果简单归因于运气，也不要因为赛果倒推确定性结论。",
+  );
+  lines.push("");
+  lines.push("# 足球赔率复盘任务");
+  lines.push("");
+  lines.push(
+    "请基于以下最新赛果与赔率数据，复盘是否与赛前分析一致，并说明哪些判断被验证、哪些判断出现偏差。",
+  );
+  lines.push(
+    "重点对照亚让、大小球、欧赔、竞足和 Crown 全指数的赛前信号，识别末盘方向、市场分歧和结果之间的关系。",
+  );
+  lines.push(
+    "注意：变化历史已过滤比赛开始后的滚球数据；如部分公司历史缺失，不得将缺失数据推断为市场共识。",
+  );
+  lines.push("");
+  lines.push("## 复盘指引");
+  lines.push("");
+  lines.push("1. 先提炼原分析结论，再用最新数据验证是否兑现。");
+  lines.push("2. 分别复盘亚让、大小球、欧赔与竞足数据，不要只看赛果。");
+  lines.push("3. 明确区分：判断正确点、判断偏差点、数据噪音、后续修正建议。");
+  lines.push("4. 如赛果与盘口方向相反，优先检查末盘水位、公司分歧和基本面遗漏。");
+  lines.push("");
+  lines.push("## 数据来源");
+  if (liveDetailUrl) {
+    lines.push(`- 比赛页（比赛信息/技术统计）：${liveDetailUrl}`);
+  }
+  lines.push(`- 分析页（联赛积分/对赛往绩/赔率）：${sourceUrl}`);
+  lines.push("");
+  lines.push("## 比赛信息");
+  lines.push(`- ${basic.homeTeam} VS ${basic.awayTeam}`);
+  lines.push(`- 赛事：${basic.league || "未知"}`);
+  lines.push(`- 时间：${basic.kickoffTime || "未知"}`);
+  lines.push(`- 状态：${basic.status || "未知"}`);
+  lines.push(`- 全场比分：${basic.score?.display || "未知"}`);
+  lines.push(`- 半场比分：${basic.score?.halfDisplay || "未知"}`);
+  lines.push(`- 场地：${basic.venue || "未知"}`);
+  lines.push(
+    `- 天气/温度：${basic.weather || "未知"}，${basic.temperature || "未知"}`,
+  );
+  lines.push(
+    `- 阵型：${basic.homeTeam} ${basic.homeFormation || "未知"} / ${basic.awayTeam} ${basic.awayFormation || "未知"}`,
+  );
+  lines.push(
+    `- 主教练：${basic.homeCoach || "未知"} / ${basic.awayCoach || "未知"}`,
+  );
+  lines.push("");
+  appendLineupInjuries(lines, detail.lineupInjuries, basic);
+  appendStats(lines, "## 技术统计", teamStats, "全部场次");
+  appendStats(lines, "", sameHomeAwayStats, "同主客");
+  appendLeagueStandings(lines, leagueStandings);
+  appendHeadToHead(lines, headToHead);
+  appendCompanyList(lines, "## 亚让公司列表", markets.asianCompanies, "asian");
+  appendCompanyList(
+    lines,
+    "## 进球数公司列表",
+    markets.overUnderCompanies,
+    "overUnder",
+  );
+  if (markets.asianHistories?.length) {
+    appendGroupedHistories(
+      lines,
+      "## 亚让变化记录（指定公司）",
+      markets.asianHistories,
+      "asian",
+      basic.kickoffTime,
+      historyWindow,
+    );
+  } else {
+    appendHistory(
+      lines,
+      "## 澳门亚让变化记录",
+      markets.asianMacauHistory,
+      "asian",
+      basic.kickoffTime,
+      historyWindow,
+    );
+  }
+  if (markets.overUnderHistories?.length) {
+    appendGroupedHistories(
+      lines,
+      "## 进球数变化记录（指定公司）",
+      markets.overUnderHistories,
+      "overUnder",
+      basic.kickoffTime,
+      historyWindow,
+    );
+  } else if (markets.overUnderMacauHistory) {
+    appendHistory(
+      lines,
+      "## 澳门进球数变化记录",
+      markets.overUnderMacauHistory,
+      "overUnder",
+      basic.kickoffTime,
+      historyWindow,
+    );
+  }
+  appendEuropeCompanyList(lines, markets.europeCompanies);
+  appendEuropeHistories(
+    lines,
+    markets.europeHistories,
+    basic.kickoffTime,
+    historyWindow,
+  );
+  appendCrowFullIndex(lines, markets.crowFullIndex);
+  appendJcOdds(lines, markets.jcOdds);
+  if (markets.europeDataStatus) {
+    lines.push("");
+    lines.push("## 欧赔数据状态");
+    lines.push(`- ${markets.europeDataStatus}`);
+  }
+  if (markets.jcOddsStatus) {
+    lines.push("");
+    lines.push("## 竞足数据状态");
+    lines.push(`- ${markets.jcOddsStatus}`);
+  }
+  if (markets.crowFullIndexStatus) {
+    lines.push("");
+    lines.push("## Crown全指数状态");
+    lines.push(`- ${markets.crowFullIndexStatus}`);
+  }
+  lines.push("");
+  lines.push("## 输出要求");
+  lines.push("1. 原分析结论回顾。");
+  lines.push("2. 最新赛果与赔率数据。");
+  lines.push("3. 赛前判断是否兑现。");
+  lines.push("4. 亚让复盘。");
+  lines.push("5. 大小球复盘。");
+  lines.push("6. 欧赔与市场变化复盘。");
+  lines.push("7. 判断偏差来源。");
+  lines.push("8. 后续模型修正建议。");
   return lines.join("\n");
 }
 
@@ -2126,9 +2396,53 @@ function pad2(input) {
   return String(input).padStart(2, "0");
 }
 
+function matchStatusName(state) {
+  const normalized = value(state);
+  if (!normalized) return "";
+  return JC_STATE_NAMES.get(normalized) ?? normalized;
+}
+
+function parseMatchScoreFromDetail(html) {
+  const eventDetailData = pickScriptVar(html, "eventDetailData");
+  const fullDisplay = firstMatch(
+    eventDetailData,
+    /比赛结束！\s*比分[：:]\s*(\d+\s*[-:]\s*\d+)/i,
+  );
+  const halfDisplay = firstMatch(
+    eventDetailData,
+    /上半场结束！\s*比分[：:]\s*(\d+\s*[-:]\s*\d+)/i,
+  );
+  if (!fullDisplay && !halfDisplay) return null;
+  const full = splitScore(fullDisplay);
+  const half = splitScore(halfDisplay);
+  return {
+    home: full.home,
+    away: full.away,
+    halfHome: half.home,
+    halfAway: half.away,
+    display: full.display,
+    halfDisplay: half.display,
+  };
+}
+
+function splitScore(score) {
+  const match = String(score || "").match(/(\d+)\s*[-:]\s*(\d+)/);
+  if (!match) {
+    return { home: "", away: "", display: "" };
+  }
+  return {
+    home: match[1],
+    away: match[2],
+    display: `${match[1]}-${match[2]}`,
+  };
+}
+
 function pickScriptVar(html, name) {
   const match = String(html || "").match(
-    new RegExp(`var\\s+${name}\\s*=\\s*(?:'([^']*)'|"([^"]*)"|([0-9]+))`, "i"),
+    new RegExp(
+      `var\\s+${name}\\s*=\\s*(?:'([^']*)'|"([^"]*)"|(-?\\d+(?:\\.\\d+)?))`,
+      "i",
+    ),
   );
   if (!match) return "";
   return cleanText(match[1] || match[2] || match[3] || "");
