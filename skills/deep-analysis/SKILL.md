@@ -144,7 +144,7 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 - 亚盘：方向、盘口、主客水、关键依据；不明确则观望。
 - 大小球：首选 + 次选 + 预期总进球；不明确则观望。
 - 泊松基准比分 Top 4。
-- 盘赔约束推荐比分 Top 4。
+- 盘赔约束推荐比分 Top 3。
 - 关键点、疑点、核心矛盾、风险。
 - 信心度与串关适合度。
 
