@@ -18,7 +18,7 @@ metadata: { "openclaw": { "emoji": "📊" } }
 | 需要展开完整 10 步分析、泊松、欧指、亚盘、大小球、波胆细则 | `references/analysis-method.md` |
 | 需要组稿、写 memory、announce 结构化结果 | `references/output-templates.md` |
 | 脚本失败、限流、已开赛、部分完成、多 worker 回传 | `references/error-handling.md` |
-| 回溯旧版完整规则 | `references/full-skill-legacy.md` |
+| 回溯旧版完整规则 | `references/full-skill-legacy.md`（仅历史参考，不作为当前执行依据；当前规则以本文件和上述 active references 为准） |
 
 **执行原则**：能用本文件完成就不要加载长参考；只在具体步骤需要细则时读取对应 reference。
 
@@ -78,7 +78,7 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 | 亚洲联赛 | 澳彩(1)、皇冠(3)、365(8)、易胜博(12)、马会(48) | 同左 | 澳彩(1)、皇冠(3)、365(8)、易胜博(12)、马会(48) |
 | 其他 | 澳彩(1)、皇冠(3)、365(8)、易胜博(12) | 同左 | 威廉(9)、365(8) |
 
-平博(47)不参与赛前分析，只可存档供复盘 CLV。
+平博(47)不参与赛前分析；如脚本已返回可作为普通赔率参考，但不再为 CLV 专门抓取或存档。
 
 ## 执行顺序
 
@@ -87,7 +87,7 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 3. 校验赔率与数据完整性，标注缺失项。
 4. 基本面分析：排名、主客场、近况、交锋、战意、赛程陷阱。
 5. 伤停分析：关键位置、进攻/防守影响、轮换风险。
-6. 泊松建模：输出泊松基准 Top 4，必要时保留与大小球同方向的泊松参考 Top 4。
+6. 泊松建模：输出泊松基准比分，最多 6 个；必要时保留与大小球同方向的泊松参考比分，但两套都不得超过 6 个。
 7. 欧指分析：按联赛类型使用指定公司交叉认证，提炼首选/次选胜平负。
 8. 亚盘分析：按指定公司交叉认证，判断上盘/下盘/走水风险。
 9. 大小球分析：按指定公司交叉认证，给首选和次选两档盘口。
@@ -105,8 +105,8 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 用途：数学基准和复盘校验。
 
 - 来自泊松分布。
-- 展示整体 Top 4：比分、概率、公平赔率。
-- Crown 波胆存在时，可计算泊松基准 EV。
+- 展示整体 Top 4～6：比分、概率、公平赔率；最多 6 个，禁止展开完整概率表。
+- Crown/竞足波胆存在时，只作为市场赔率参考，不计算 EV。
 - 若大小球方向与泊松 Top 6 明显冲突，可额外展示“与大小球同方向的泊松参考 Top 4”。这仍是泊松参考，不是最终推荐比分。
 
 ### 2. 盘赔约束推荐比分
@@ -114,6 +114,8 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 用途：最终比分推荐。
 
 **强制边界**：盘赔约束比分与泊松无关。不得从泊松 Top 4/Top 6 或完整泊松概率分布中取候选、排序或计算 EV。
+
+**EV 废弃规则**：deep-analysis 不再计算、展示或复盘 EV。亚盘、大小球、比分都只输出方向判断、赔率依据、泊松概率/公平赔率（用于数学基准）和波胆市场参考；不得写“泊松 EV”“EV=概率×赔率”“💰/≈/❌ 价值分级”。
 
 必须综合：
 
@@ -131,7 +133,7 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 - 小 3：总进球 ≤3 可入候选；3 球标“走水”，0-2 球标“小球命中”。
 - 半球盘按明确大/小方向筛选。
 
-盘赔约束输出不得带泊松概率、公平赔率或泊松 EV。每个比分只写：比分、胜平负/亚盘/大小球是否满足、Crown 赔率、竞足赔率（如有）。
+盘赔约束输出不得带泊松概率、公平赔率或 EV。每个比分只写：比分、胜平负/亚盘/大小球是否满足、Crown 赔率、竞足赔率（如有）。
 
 ## 输出顺序
 
@@ -143,7 +145,7 @@ npm run analyze -- {matchId或analysis URL} --history-window all --format opencl
 - 胜平负：首选 + 次选 + 即时赔率依据。
 - 亚盘：方向、盘口、主客水、关键依据；不明确则观望。
 - 大小球：首选 + 次选 + 预期总进球；不明确则观望。
-- 泊松基准比分 Top 4。
+- 泊松基准比分最多 6 个。
 - 盘赔约束推荐比分 Top 3。
 - 关键点、疑点、核心矛盾、风险。
 - 信心度与串关适合度。
@@ -156,9 +158,9 @@ memory 只写结构化摘要，不写完整分析全文。必须包含：
 
 - 基本面摘要。
 - 赔率摘要：欧指、亚盘、大小球方向和关键异动。
-- 比分价值依据：泊松基准比分使用 Crown/未做；盘赔约束比分使用 Crown/Crown+竞足/竞足/Crown 缺失。
+- 比分赔率依据：泊松基准比分只记录是否有 Crown/竞足参考；盘赔约束比分使用 Crown/Crown+竞足/竞足/Crown 缺失。
 - 综合评估：胜平负、亚盘、大小球、泊松基准比分、盘赔约束比分、置信区间、关键点、疑点、核心矛盾、风险、信心度、串关适合度。
-- 泊松完整概率表 0:0～7:7，供 post-review 查实际比分排位。
+- 泊松比分简表：最多 6 个比分，供 post-review 做 Top 6 命中校验；不写完整 0:0～7:7 概率表。
 
 多 worker 场景：worker 不写 memory，只通过 announce 返回结构化结果和 memory 摘要；编排方统一合并写入。
 
@@ -173,6 +175,6 @@ memory 只写结构化摘要，不写完整分析全文。必须包含：
 ## 需要完整细则时
 
 - 数据抓取、公司 ID、赔率字段、原始数据存档：读 `references/data-fetch-and-validation.md`。
-- 10 步分析、泊松参数、欧指/亚盘/大小球细则、波胆 EV：读 `references/analysis-method.md`。
+- 10 步分析、泊松参数、欧指/亚盘/大小球细则、波胆参考：读 `references/analysis-method.md`。
 - 输出模板、memory 模板、announce 字段：读 `references/output-templates.md`。
 - 异常和限流处理：读 `references/error-handling.md`。
