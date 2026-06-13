@@ -2412,9 +2412,10 @@ function parseMatchScoreFromDetail(html) {
     eventDetailData,
     /上半场结束！\s*比分[：:]\s*(\d+\s*[-:]\s*\d+)/i,
   );
-  if (!fullDisplay && !halfDisplay) return null;
-  const full = splitScore(fullDisplay);
+  const latestEventScore = parseLatestEventScore(eventDetailData);
+  const full = splitScore(fullDisplay || latestEventScore);
   const half = splitScore(halfDisplay);
+  if (!full.display && !half.display) return null;
   return {
     home: full.home,
     away: full.away,
@@ -2423,6 +2424,19 @@ function parseMatchScoreFromDetail(html) {
     display: full.display,
     halfDisplay: half.display,
   };
+}
+
+function parseLatestEventScore(eventDetailData) {
+  let latest = "";
+  for (const row of String(eventDetailData || "").split("!")) {
+    const fields = row.split("^");
+    const home = value(fields[8]);
+    const away = value(fields[9]);
+    if (/^\d+$/.test(home) && /^\d+$/.test(away) && !(home === "0" && away === "0")) {
+      latest = `${home}-${away}`;
+    }
+  }
+  return latest;
 }
 
 function splitScore(score) {
